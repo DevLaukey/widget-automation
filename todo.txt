@@ -1,0 +1,204 @@
+================================================================================
+ANIMATED NUMBER COUNTER WIDGET - PROJECT TODO
+================================================================================
+
+PROJECT OVERVIEW:
+Custom animated number counter widget similar to Elfsight's Number Counter.
+Fully customizable, embeddable, with admin editor panel.
+
+================================================================================
+MODULE 1: CORE COUNTER ANIMATION HOOK
+================================================================================
+[ ] Create /hooks directory
+[ ] Create useCounterAnimation.ts hook
+    [ ] Implement requestAnimationFrame-based animation
+    [ ] Support easing functions (linear, ease-out, ease-in-out, smooth)
+    [ ] Handle start value, end value, duration parameters
+    [ ] Support decimal precision formatting
+    [ ] Handle positive and negative values
+    [ ] Add prefix/suffix support in formatting
+[ ] Create useIntersectionObserver.ts hook
+    [ ] Trigger animation when element scrolls into view
+    [ ] Support threshold configuration
+    [ ] Support "once" vs "every time" trigger modes
+[ ] Test hooks in isolation
+
+================================================================================
+MODULE 2: TYPESCRIPT TYPES & INTERFACES
+================================================================================
+[ ] Create /types directory
+[ ] Create counter.ts types file
+    [ ] CardData interface (id, label, value, title, description, etc.)
+    [ ] AnimationConfig interface (start, end, duration, easing, etc.)
+    [ ] StyleConfig interface (colors, fonts, radius, shadows)
+    [ ] WidgetConfig interface (cards array, global styles)
+[ ] Create editor.ts types file
+    [ ] EditorState interface
+    [ ] Action types for state management
+
+================================================================================
+MODULE 3: COUNTER CARD COMPONENT
+================================================================================
+[ ] Create /components/counter directory
+[ ] Create CounterCard.tsx component
+    [ ] Top label/category display
+    [ ] Large animated numeric value
+    [ ] Title and multi-line description
+    [ ] Optional background image with overlay
+    [ ] Optional icon/logo support
+    [ ] Positive values = green color
+    [ ] Negative values = dark/gray color
+    [ ] Prefix and suffix display
+    [ ] Responsive sizing
+[ ] Create CounterCard.css or use Tailwind styles
+[ ] Add hover animations (optional enhancement)
+
+================================================================================
+MODULE 4: COUNTER GRID/WIDGET LAYOUT
+================================================================================
+[ ] Create CounterWidget.tsx (main container)
+    [ ] 3 cards per row on desktop
+    [ ] 2 cards per row on tablet
+    [ ] 1 card per row on mobile
+    [ ] Gap and spacing configuration
+[ ] Implement CSS Grid or Flexbox layout
+[ ] Add container max-width and padding
+[ ] Support multiple widgets per page
+
+================================================================================
+MODULE 5: STATE MANAGEMENT & CONTEXT
+================================================================================
+[ ] Create /context directory
+[ ] Create WidgetContext.tsx
+    [ ] Store widget configuration
+    [ ] Store cards data array
+    [ ] Provide update functions
+[ ] Create useWidget.ts custom hook
+[ ] Implement add, edit, delete, reorder card functions
+[ ] Handle real-time preview updates
+
+================================================================================
+MODULE 6: EDITOR PANEL UI
+================================================================================
+[ ] Create /components/editor directory
+[ ] Create EditorPanel.tsx (main editor container)
+[ ] Create CardEditor.tsx (individual card editing)
+    [ ] Label input
+    [ ] Value inputs (start, end, prefix, suffix)
+    [ ] Animation settings (duration, easing, decimal places)
+    [ ] Title and description inputs
+    [ ] Image upload/URL input
+    [ ] Icon selector
+[ ] Create StyleEditor.tsx (global style controls)
+    [ ] Font family selector
+    [ ] Color pickers (primary, secondary, background)
+    [ ] Card radius slider
+    [ ] Shadow controls
+    [ ] Spacing controls
+[ ] Create CardList.tsx (sortable card list)
+    [ ] Drag-and-drop reordering
+    [ ] Add new card button
+    [ ] Delete card button
+    [ ] Duplicate card button
+[ ] Create PreviewPane.tsx (live preview)
+    [ ] Real-time animation preview
+    [ ] Responsive preview modes (desktop/tablet/mobile)
+[ ] Create ColorPicker.tsx utility component
+[ ] Create ImageUploader.tsx utility component
+
+================================================================================
+MODULE 7: API ROUTES (NEXT.JS APP ROUTER)
+================================================================================
+[ ] Create /app/api directory structure
+[ ] Create /app/api/widgets/route.ts
+    [ ] GET - List all widgets
+    [ ] POST - Create new widget
+[ ] Create /app/api/widgets/[id]/route.ts
+    [ ] GET - Get widget by ID
+    [ ] PUT - Update widget
+    [ ] DELETE - Delete widget
+[ ] Set up data storage (JSON file or database)
+    [ ] Create /data directory for JSON storage
+    [ ] OR set up database connection (optional)
+[ ] Add validation and error handling
+
+================================================================================
+MODULE 8: EMBEDDABLE WIDGET SCRIPT
+================================================================================
+[ ] Create /public/widgets directory
+[ ] Create aggro-counter.js (standalone embed script)
+    [ ] Self-contained, no dependencies
+    [ ] Fetch widget config from API
+    [ ] Render widget into target div
+    [ ] Support data-widget-id attribute
+    [ ] Support data-lazy attribute
+    [ ] Graceful fallback if JS disabled
+[ ] Create embed code generator in editor
+    [ ] Generate copy-paste HTML snippet
+    [ ] Include widget ID
+    [ ] Copy to clipboard functionality
+[ ] Test embed on external HTML page
+[ ] Ensure multiple widgets per page works
+
+================================================================================
+MODULE 9: DEMO PAGE & MAIN APP
+================================================================================
+[ ] Update app/page.tsx as landing/demo page
+[ ] Create /app/editor/page.tsx for editor interface
+[ ] Create /app/preview/[id]/page.tsx for widget preview
+[ ] Add navigation between pages
+[ ] Style landing page with examples
+
+================================================================================
+MODULE 10: STYLING & POLISH
+================================================================================
+[ ] Implement bold, modern sports aesthetic
+[ ] Large eye-catching numbers
+[ ] High-contrast typography
+[ ] Background images with grayscale/dark overlay
+[ ] Clean minimal UI with strong hierarchy
+[ ] Add theme presets (dark mode, light mode, custom)
+[ ] Responsive testing on all breakpoints
+[ ] Animation performance optimization
+[ ] Accessibility (ARIA labels, keyboard navigation)
+
+================================================================================
+MODULE 11: OPTIONAL ENHANCEMENTS
+================================================================================
+[ ] Hover animations on cards
+[ ] Theme preset selector
+[ ] API/JSON-driven values (external data source)
+[ ] Dark/light mode toggle
+[ ] CMS integration documentation
+[ ] Export/import widget configurations
+[ ] Undo/redo in editor
+[ ] Animation replay button
+
+================================================================================
+MODULE 12: TESTING & DEPLOYMENT
+================================================================================
+[ ] Test on WordPress (embed)
+[ ] Test on Webflow (embed)
+[ ] Test on Shopify (embed)
+[ ] Test on static HTML site
+[ ] Cross-browser testing (Chrome, Firefox, Safari, Edge)
+[ ] Mobile device testing
+[ ] Performance audit (Lighthouse)
+[ ] Build production bundle
+[ ] Deploy to hosting platform
+
+================================================================================
+CURRENT PROGRESS
+================================================================================
+Started: Module 1 - Core Counter Animation Hook
+Status: In Progress
+
+================================================================================
+NOTES
+================================================================================
+- Using Next.js 16 with App Router
+- Using Tailwind CSS v4
+- Using TypeScript
+- React 19
+
+================================================================================

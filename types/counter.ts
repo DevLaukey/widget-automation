@@ -98,6 +98,7 @@ export interface WidgetConfig {
   cards: CardData[];
   styles: StyleConfig;
   layout: LayoutConfig;
+  apiUrl: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -121,12 +122,12 @@ export const DEFAULT_ANIMATION_CONFIG: AnimationConfig = {
 export const DEFAULT_COLOR_CONFIG: ColorConfig = {
   primary: "#3b82f6",
   secondary: "#6b7280",
-  background: "#1f2937",
-  text: "#ffffff",
-  label: "#9ca3af",
-  positive: "#22c55e",
+  background: "transparent",
+  text: "#1f2937",
+  label: "#6b7280",
+  positive: "#1f2937",
   negative: "#6b7280",
-  neutral: "#ffffff",
+  neutral: "#1f2937",
 };
 
 export const DEFAULT_FONT_CONFIG: FontConfig = {
@@ -143,8 +144,8 @@ export const DEFAULT_FONT_CONFIG: FontConfig = {
 export const DEFAULT_STYLE_CONFIG: StyleConfig = {
   colors: DEFAULT_COLOR_CONFIG,
   fonts: DEFAULT_FONT_CONFIG,
-  borderRadius: 8,
-  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+  borderRadius: 0,
+  boxShadow: "none",
   padding: "1.5rem",
   gap: "1.5rem",
   cardMinHeight: "200px",

@@ -3,7 +3,8 @@ ANIMATED NUMBER COUNTER WIDGET - PROJECT TODO
 ================================================================================
 
 PROJECT OVERVIEW:
-
+Custom animated number counter widget similar to Elfsight's Number Counter.
+Fully customizable, embeddable, with admin editor panel.
 
 ================================================================================
 MODULE 1: CORE COUNTER ANIMATION HOOK

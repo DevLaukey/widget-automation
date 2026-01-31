@@ -60,6 +60,7 @@ export type EditorAction =
   // Widget Actions
   | { type: "SET_WIDGET"; payload: WidgetConfig }
   | { type: "UPDATE_WIDGET_NAME"; payload: { name: string } }
+  | { type: "UPDATE_API_URL"; payload: { apiUrl: string } }
   | { type: "RESET_WIDGET" }
 
   // Editor UI Actions

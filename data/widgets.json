@@ -1,0 +1,101 @@
+{
+  "id": "widget-1",
+  "name": "My Counter Widget",
+  "cards": [
+    {
+      "id": "card-1",
+      "label": "",
+      "title": "casdacdcasdcsadc",
+      "description": "",
+      "animation": {
+        "startValue": 0,
+        "endValue": 54000,
+        "duration": 2000,
+        "easing": "easeOut",
+        "decimalPlaces": 0,
+        "prefix": "$",
+        "suffix": "",
+        "triggerOnScroll": false,
+        "threshold": 0.3
+      },
+      "icon": "/images/1769854941919-ChatGPT_Image_Oct_6__2025__12_41_10_AM.png"
+    },
+    {
+      "id": "card-2",
+      "label": "",
+      "title": "Active Users",
+      "description": "",
+      "animation": {
+        "startValue": 0,
+        "endValue": 12500,
+        "duration": 2000,
+        "easing": "easeOut",
+        "decimalPlaces": 0,
+        "prefix": "",
+        "suffix": "+",
+        "triggerOnScroll": false,
+        "threshold": 0.3
+      }
+    },
+    {
+      "id": "card-3",
+      "label": "",
+      "title": "Growth Rate",
+      "description": "",
+      "animation": {
+        "startValue": 0,
+        "endValue": 127,
+        "duration": 2000,
+        "easing": "easeOut",
+        "decimalPlaces": 1,
+        "prefix": "",
+        "suffix": "%",
+        "triggerOnScroll": false,
+        "threshold": 0.3
+      }
+    }
+  ],
+  "styles": {
+    "colors": {
+      "primary": "#3b82f6",
+      "secondary": "#6b7280",
+      "background": "#1f2937",
+      "text": "#ffffff",
+      "label": "#9ca3af",
+      "positive": "#22c55e",
+      "negative": "#6b7280",
+      "neutral": "#ffffff"
+    },
+    "fonts": {
+      "family": "system-ui, -apple-system, sans-serif",
+      "valueFontSize": "3rem",
+      "labelFontSize": "0.875rem",
+      "titleFontSize": "1.25rem",
+      "descriptionFontSize": "0.875rem",
+      "valueWeight": 700,
+      "labelWeight": 500,
+      "titleWeight": 600
+    },
+    "borderRadius": 8,
+    "boxShadow": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+    "padding": "1.5rem",
+    "gap": "1.5rem",
+    "cardMinHeight": "200px",
+    "overlay": {
+      "enabled": false,
+      "color": "#000000",
+      "opacity": 0.5
+    }
+  },
+  "layout": {
+    "columns": {
+      "desktop": 3,
+      "tablet": 2,
+      "mobile": 1
+    },
+    "maxWidth": "1200px",
+    "containerPadding": "2rem"
+  },
+  "createdAt": "2026-01-31T10:15:49.536Z",
+  "updatedAt": "2026-01-31T10:22:32.024Z"
+}

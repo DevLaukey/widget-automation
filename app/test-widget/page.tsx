@@ -65,6 +65,7 @@ const widget1: WidgetConfig = {
     borderRadius: 16,
   },
   layout: DEFAULT_LAYOUT_CONFIG,
+  apiUrl: "",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
@@ -145,6 +146,7 @@ const widget2: WidgetConfig = {
       mobile: 1,
     },
   },
+  apiUrl: "",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
@@ -201,6 +203,7 @@ const widget3: WidgetConfig = {
     },
     maxWidth: "800px",
   },
+  apiUrl: "",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.ts)",
+      "Bash(.js)",
+      "Bash(.json \")"
+    ]
+  }
+}

@@ -9,7 +9,7 @@
       "description": "",
       "animation": {
         "startValue": 0,
-        "endValue": 54000,
+        "endValue": 181.03,
         "duration": 2000,
         "easing": "easeOut",
         "decimalPlaces": 0,
@@ -27,7 +27,7 @@
       "description": "",
       "animation": {
         "startValue": 0,
-        "endValue": 12500,
+        "endValue": 16.5,
         "duration": 2000,
         "easing": "easeOut",
         "decimalPlaces": 0,
@@ -44,7 +44,7 @@
       "description": "",
       "animation": {
         "startValue": 0,
-        "endValue": 127,
+        "endValue": 0.01,
         "duration": 2000,
         "easing": "easeOut",
         "decimalPlaces": 1,
@@ -97,5 +97,6 @@
     "containerPadding": "2rem"
   },
   "createdAt": "2026-01-31T10:15:49.536Z",
-  "updatedAt": "2026-01-31T10:22:32.024Z"
+  "updatedAt": "2026-02-08T05:35:14.991Z",
+  "apiUrl": "https://ugia-mmeab.ondigitalocean.app/api/groups/b13bd078"
 }

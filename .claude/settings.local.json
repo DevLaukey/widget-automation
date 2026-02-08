@@ -3,7 +3,8 @@
     "allow": [
       "Bash(.ts)",
       "Bash(.js)",
-      "Bash(.json \")"
+      "Bash(.json \")",
+      "WebFetch(domain:ugia-mmeab.ondigitalocean.app)"
     ]
   }
 }

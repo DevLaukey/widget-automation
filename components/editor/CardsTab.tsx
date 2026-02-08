@@ -18,7 +18,8 @@ export function CardsTab() {
     setFetching(true);
     setFetchStatus("");
     try {
-      const res = await fetch(apiUrl);
+      const proxyUrl = `/api/proxy?url=${encodeURIComponent(apiUrl)}`;
+      const res = await fetch(proxyUrl);
       const data = await res.json();
       const apiCards = data?.cards || [];
       if (!apiCards.length) {

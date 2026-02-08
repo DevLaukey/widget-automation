@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useEditor } from "@/context/EditorContext";
 import type { WidgetConfig } from "@/types/counter";
 
-function generateEmbedCode(config: WidgetConfig): string {
+function generateEmbedCode(config: WidgetConfig, proxyBase: string): string {
   const { cards, styles, layout } = config;
   const widgetId = `cw-${config.id}`;
 
@@ -55,6 +55,7 @@ ${cardHtml}
 <script>
 (function(){
   var API_URL="${apiUrlEscaped}";
+  var PROXY_BASE="${proxyBase}";
   var easings={
     linear:function(t){return t},
     easeOut:function(t){return 1-Math.pow(1-t,3)},
@@ -92,8 +93,8 @@ ${cardHtml}
       els.forEach(animateEl);
     }
   }
-  if(API_URL){
-    fetch(API_URL)
+  if(API_URL&&PROXY_BASE){
+    fetch(PROXY_BASE+"/api/proxy?url="+encodeURIComponent(API_URL))
       .then(function(r){return r.json();})
       .then(function(data){
         var apiCards=data&&data.cards?data.cards:[];
@@ -117,10 +118,15 @@ ${cardHtml}
 export function ExportTab() {
   const { state } = useEditor();
   const [copied, setCopied] = useState(false);
+  const [proxyBase, setProxyBase] = useState("");
+
+  useEffect(() => {
+    setProxyBase(window.location.origin);
+  }, []);
 
   const embedCode = useMemo(
-    () => generateEmbedCode(state.widget),
-    [state.widget]
+    () => generateEmbedCode(state.widget, proxyBase),
+    [state.widget, proxyBase]
   );
 
   const handleCopy = async () => {

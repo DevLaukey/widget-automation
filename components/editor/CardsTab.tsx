@@ -414,24 +414,29 @@ function ImageUpload({
     if (!file) return;
 
     setError("");
+
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/svg+xml", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setError("Invalid file type");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("File too large (max 5MB)");
+      return;
+    }
+
     setUploading(true);
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.readAsDataURL(file);
       });
-      const data = await res.json();
-      if (res.ok) {
-        onChange(data.url);
-      } else {
-        setError(data.error || "Upload failed");
-      }
+      onChange(dataUrl);
     } catch {
-      setError("Upload failed");
+      setError("Failed to read image");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -450,7 +455,9 @@ function ImageUpload({
             alt="Logo"
             className="w-10 h-10 object-contain rounded"
           />
-          <span className="text-xs text-gray-400 truncate flex-1">{value}</span>
+          <span className="text-xs text-gray-400 truncate flex-1">
+            {value.startsWith("data:") ? "Embedded image" : value}
+          </span>
           <button
             onClick={() => onChange("")}
             className="text-xs text-red-400 hover:text-red-300 shrink-0"

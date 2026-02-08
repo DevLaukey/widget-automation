@@ -59,12 +59,9 @@ export function CounterCard({ card, styles, className = "" }: CounterCardProps) 
     ? { ...styles, ...card.customStyles }
     : styles;
 
-  // Parse font size values for responsive scaling
   const valueFontSize = mergedStyles.fonts.valueFontSize;
   const titleFontSize = mergedStyles.fonts.titleFontSize;
-
   const labelFontSize = mergedStyles.fonts.labelFontSize;
-  const descFontSize = mergedStyles.fonts.descriptionFontSize;
 
   return (
     <>
@@ -103,19 +100,20 @@ export function CounterCard({ card, styles, className = "" }: CounterCardProps) 
             </h2>
           )}
 
-          {/* Logo */}
+          {/* Logo - sized to match blue text block */}
           {card.icon && (
             <div className="counter-card__logo">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={card.icon}
                 alt=""
-                style={{ width: 48, height: 48, objectFit: "contain" }}
+                className="counter-card__logo-img"
+                style={{ objectFit: "contain" }}
               />
             </div>
           )}
 
-          {/* 2. Animated Value / Prize Amount */}
+          {/* 2. Animated Value / Prize Amount - bold italic green */}
           <p
             className="counter-card__value tabular-nums transition-colors duration-300 break-words w-full"
             style={{
@@ -130,14 +128,16 @@ export function CounterCard({ card, styles, className = "" }: CounterCardProps) 
             {counter.displayValue}
           </p>
 
-          {/* Heading */}
+          {/* 3. Title as blue event details text */}
           {card.title && (
             <h3
-              className="counter-card__heading break-words w-full"
+              className="counter-card__title break-words w-full"
               style={{
-                color: mergedStyles.colors.text,
-                fontWeight: mergedStyles.fonts.titleWeight,
+                color: mergedStyles.colors.primary,
+                fontWeight: 700,
                 fontFamily: mergedStyles.fonts.family,
+                textTransform: "uppercase",
+                lineHeight: 1.15,
                 margin: 0,
               }}
             >
@@ -145,7 +145,7 @@ export function CounterCard({ card, styles, className = "" }: CounterCardProps) 
             </h3>
           )}
 
-          {/* 3. Event Details / Description (blue text) */}
+          {/* Description (additional info) */}
           {card.description && (
             <div
               className="counter-card__description w-full"
@@ -179,15 +179,17 @@ export function CounterCard({ card, styles, className = "" }: CounterCardProps) 
         .counter-card__value {
           font-size: ${valueFontSize};
         }
-        .counter-card__heading {
+        .counter-card__title {
           font-size: ${titleFontSize};
         }
         .counter-card__description {
-          font-size: ${descFontSize};
+          font-size: ${mergedStyles.fonts.descriptionFontSize};
         }
-        .counter-card__logo :global(img) {
-          width: 48px;
-          height: 48px;
+        .counter-card__logo-img {
+          width: auto;
+          height: ${titleFontSize};
+          max-height: 200px;
+          min-height: 80px;
         }
         @media (max-width: 640px) {
           .counter-card {
@@ -198,17 +200,16 @@ export function CounterCard({ card, styles, className = "" }: CounterCardProps) 
             font-size: clamp(0.75rem, 4vw, ${labelFontSize});
           }
           .counter-card__value {
-            font-size: clamp(1.5rem, 6vw, ${valueFontSize});
+            font-size: clamp(2rem, 12vw, ${valueFontSize});
           }
-          .counter-card__heading {
-            font-size: clamp(0.85rem, 3.5vw, ${titleFontSize});
+          .counter-card__title {
+            font-size: clamp(1.2rem, 7vw, ${titleFontSize});
           }
           .counter-card__description {
-            font-size: clamp(0.75rem, 3vw, ${descFontSize});
+            font-size: clamp(0.75rem, 3vw, ${mergedStyles.fonts.descriptionFontSize});
           }
-          .counter-card__logo :global(img) {
-            width: 36px;
-            height: 36px;
+          .counter-card__logo-img {
+            height: clamp(60px, 15vw, 120px);
           }
         }
       `}</style>

@@ -90,10 +90,10 @@ function createDefaultWidget(): WidgetConfig {
         neutral: "#ffffff",
       },
       fonts: {
-        family: "system-ui, -apple-system, sans-serif",
-        valueFontSize: "3rem",
+        family: "'Orbitron', sans-serif",
+        valueFontSize: "110px",
         labelFontSize: "1.5rem",
-        titleFontSize: "1.25rem",
+        titleFontSize: "70px",
         descriptionFontSize: "0.875rem",
         valueWeight: 700,
         labelWeight: 700,

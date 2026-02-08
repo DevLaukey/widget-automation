@@ -15,7 +15,7 @@ function generateEmbedCode(config: WidgetConfig, proxyBase: string): string {
         ? card.icon.startsWith("data:") ? card.icon : `${proxyBase}${card.icon}`
         : "";
       const iconHtml = iconSrc
-        ? `<img src="${iconSrc}" alt="" style="width:48px;height:48px;object-fit:contain;" />`
+        ? `<img src="${iconSrc}" alt="" style="width:auto;height:${styles.fonts.titleFontSize};max-height:200px;min-height:80px;object-fit:contain;" />`
         : "";
 
       // 1. Header label (e.g. "KUMITE")
@@ -23,12 +23,12 @@ function generateEmbedCode(config: WidgetConfig, proxyBase: string): string {
         ? `<h2 style="margin:0;color:${styles.colors.text};font-size:${styles.fonts.labelFontSize};font-weight:${styles.fonts.labelWeight};font-family:${styles.fonts.family};text-transform:uppercase;-webkit-text-stroke:1px ${styles.colors.secondary};paint-order:stroke fill;">${card.label}</h2>`
         : "";
 
-      // 2. Title / heading
+      // 2. Title as blue event details text
       const titleHtml = card.title
-        ? `<h3 style="margin:0;color:${styles.colors.text};font-size:${styles.fonts.titleFontSize};font-weight:${styles.fonts.titleWeight};font-family:${styles.fonts.family};">${card.title}</h3>`
+        ? `<h3 style="margin:0;color:${styles.colors.primary};font-size:${styles.fonts.titleFontSize};font-weight:700;font-family:${styles.fonts.family};text-transform:uppercase;line-height:1.15;">${card.title}</h3>`
         : "";
 
-      // 3. Description / event details (blue text, multi-line)
+      // 3. Description (additional details)
       const descLines = card.description
         ? card.description.split("\n").map((l: string) => l.trim()).filter(Boolean).join("<br>")
         : "";
@@ -58,6 +58,7 @@ function generateEmbedCode(config: WidgetConfig, proxyBase: string): string {
   const apiUrlEscaped = config.apiUrl ? config.apiUrl.replace(/"/g, '\\"') : "";
 
   return `<!-- Counter Widget - Embed Code -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <div id="${widgetId}" style="max-width:${layout.maxWidth};margin:0 auto;padding:${layout.containerPadding};">
   <style>
     #${widgetId} .${widgetId}-grid {
@@ -73,9 +74,9 @@ function generateEmbedCode(config: WidgetConfig, proxyBase: string): string {
     #${widgetId} .${widgetId}-card{word-break:break-word;overflow-wrap:break-word;}
     @media(max-width:640px){
       #${widgetId} .${widgetId}-card{padding:1rem;min-height:140px;}
-      #${widgetId} .${widgetId}-value{font-size:clamp(1.5rem,6vw,${styles.fonts.valueFontSize})!important;}
-      #${widgetId} .${widgetId}-card h3{font-size:clamp(0.85rem,3.5vw,${styles.fonts.titleFontSize})!important;}
-      #${widgetId} .${widgetId}-card img{width:36px!important;height:36px!important;}
+      #${widgetId} .${widgetId}-value{font-size:clamp(2rem,12vw,${styles.fonts.valueFontSize})!important;}
+      #${widgetId} .${widgetId}-card h3{font-size:clamp(1.2rem,7vw,${styles.fonts.titleFontSize})!important;}
+      #${widgetId} .${widgetId}-card img{height:clamp(60px,15vw,120px)!important;width:auto!important;}
     }
   </style>
   <div class="${widgetId}-grid">

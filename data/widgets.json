@@ -5,7 +5,7 @@
     {
       "id": "card-1",
       "label": "",
-      "title": "casdacdcasdcsadc",
+      "title": "Winter Classic GP KUMITE PRIZE NOGI OPEN <185.5",
       "description": "",
       "animation": {
         "startValue": 0,
@@ -23,7 +23,7 @@
     {
       "id": "card-2",
       "label": "",
-      "title": "Active Users",
+      "title": "Stampede Summerslam Jul 4/26",
       "description": "",
       "animation": {
         "startValue": 0,
@@ -31,8 +31,8 @@
         "duration": 2000,
         "easing": "easeOut",
         "decimalPlaces": 0,
-        "prefix": "",
-        "suffix": "+",
+        "prefix": "$",
+        "suffix": "",
         "triggerOnScroll": false,
         "threshold": 0.3
       }
@@ -40,7 +40,7 @@
     {
       "id": "card-3",
       "label": "",
-      "title": "Growth Rate",
+      "title": "Winter Showcase 2026",
       "description": "",
       "animation": {
         "startValue": 0,
@@ -48,8 +48,8 @@
         "duration": 2000,
         "easing": "easeOut",
         "decimalPlaces": 1,
-        "prefix": "",
-        "suffix": "%",
+        "prefix": "$",
+        "suffix": "",
         "triggerOnScroll": false,
         "threshold": 0.3
       }
@@ -67,10 +67,10 @@
       "neutral": "#ffffff"
     },
     "fonts": {
-      "family": "system-ui, -apple-system, sans-serif",
-      "valueFontSize": "3rem",
+      "family": "'Orbitron', sans-serif",
+      "valueFontSize": "110px",
       "labelFontSize": "1.5rem",
-      "titleFontSize": "1.25rem",
+      "titleFontSize": "70px",
       "descriptionFontSize": "0.875rem",
       "valueWeight": 700,
       "labelWeight": 700,
@@ -97,6 +97,6 @@
     "containerPadding": "2rem"
   },
   "createdAt": "2026-01-31T10:15:49.536Z",
-  "updatedAt": "2026-02-08T05:35:14.991Z",
+  "updatedAt": "2026-02-08T07:28:49.489Z",
   "apiUrl": "https://ugia-mmeab.ondigitalocean.app/api/groups/b13bd078"
 }

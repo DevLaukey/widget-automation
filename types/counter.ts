@@ -134,7 +134,7 @@ export const DEFAULT_FONT_CONFIG: FontConfig = {
   family: "'Orbitron', sans-serif",
   valueFontSize: "110px",
   labelFontSize: "1.5rem",
-  titleFontSize: "70px",
+  titleFontSize: "28px",
   descriptionFontSize: "0.875rem",
   valueWeight: 700,
   labelWeight: 700,

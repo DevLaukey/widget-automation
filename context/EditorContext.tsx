@@ -93,7 +93,7 @@ function createDefaultWidget(): WidgetConfig {
         family: "'Orbitron', sans-serif",
         valueFontSize: "110px",
         labelFontSize: "1.5rem",
-        titleFontSize: "70px",
+        titleFontSize: "28px",
         descriptionFontSize: "0.875rem",
         valueWeight: 700,
         labelWeight: 700,
@@ -101,7 +101,7 @@ function createDefaultWidget(): WidgetConfig {
       },
       borderRadius: 0,
       boxShadow: "none",
-      padding: "1.5rem",
+      padding: "2.5rem",
       gap: "1.5rem",
       cardMinHeight: "200px",
       overlay: {

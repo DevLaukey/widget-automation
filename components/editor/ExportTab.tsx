@@ -15,7 +15,7 @@ function generateEmbedCode(config: WidgetConfig, proxyBase: string): string {
         ? card.icon.startsWith("data:") ? card.icon : `${proxyBase}${card.icon}`
         : "";
       const iconHtml = iconSrc
-        ? `<img src="${iconSrc}" alt="" style="width:auto;height:${styles.fonts.titleFontSize};max-height:200px;min-height:80px;object-fit:contain;" />`
+        ? `<img src="${iconSrc}" alt="" style="width:auto;height:180px;max-width:100%;object-fit:contain;" />`
         : "";
 
       // 1. Header label (e.g. "KUMITE")
@@ -73,10 +73,10 @@ function generateEmbedCode(config: WidgetConfig, proxyBase: string): string {
     }
     #${widgetId} .${widgetId}-card{word-break:break-word;overflow-wrap:break-word;}
     @media(max-width:640px){
-      #${widgetId} .${widgetId}-card{padding:1rem;min-height:140px;}
+      #${widgetId} .${widgetId}-card{padding:1.5rem;min-height:140px;}
       #${widgetId} .${widgetId}-value{font-size:clamp(2rem,12vw,${styles.fonts.valueFontSize})!important;}
-      #${widgetId} .${widgetId}-card h3{font-size:clamp(1.2rem,7vw,${styles.fonts.titleFontSize})!important;}
-      #${widgetId} .${widgetId}-card img{height:clamp(60px,15vw,120px)!important;width:auto!important;}
+      #${widgetId} .${widgetId}-card h3{font-size:clamp(1rem,5vw,${styles.fonts.titleFontSize})!important;}
+      #${widgetId} .${widgetId}-card img{height:clamp(80px,25vw,140px)!important;width:auto!important;}
     }
   </style>
   <div class="${widgetId}-grid">

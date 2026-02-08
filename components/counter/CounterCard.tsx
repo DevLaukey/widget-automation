@@ -187,13 +187,12 @@ export function CounterCard({ card, styles, className = "" }: CounterCardProps) 
         }
         .counter-card__logo-img {
           width: auto;
-          height: ${titleFontSize};
-          max-height: 200px;
-          min-height: 80px;
+          height: 180px;
+          max-width: 100%;
         }
         @media (max-width: 640px) {
           .counter-card {
-            padding: 1rem;
+            padding: 1.5rem;
             min-height: 140px;
           }
           .counter-card__label {
@@ -203,13 +202,13 @@ export function CounterCard({ card, styles, className = "" }: CounterCardProps) 
             font-size: clamp(2rem, 12vw, ${valueFontSize});
           }
           .counter-card__title {
-            font-size: clamp(1.2rem, 7vw, ${titleFontSize});
+            font-size: clamp(1rem, 5vw, ${titleFontSize});
           }
           .counter-card__description {
             font-size: clamp(0.75rem, 3vw, ${mergedStyles.fonts.descriptionFontSize});
           }
           .counter-card__logo-img {
-            height: clamp(60px, 15vw, 120px);
+            height: clamp(80px, 25vw, 140px);
           }
         }
       `}</style>

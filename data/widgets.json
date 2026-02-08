@@ -70,7 +70,7 @@
       "family": "'Orbitron', sans-serif",
       "valueFontSize": "110px",
       "labelFontSize": "1.5rem",
-      "titleFontSize": "70px",
+      "titleFontSize": "28px",
       "descriptionFontSize": "0.875rem",
       "valueWeight": 700,
       "labelWeight": 700,
@@ -78,7 +78,7 @@
     },
     "borderRadius": 8,
     "boxShadow": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-    "padding": "1.5rem",
+    "padding": "2.5rem",
     "gap": "1.5rem",
     "cardMinHeight": "200px",
     "overlay": {

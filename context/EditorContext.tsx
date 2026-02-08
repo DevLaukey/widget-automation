@@ -112,7 +112,7 @@ function createDefaultWidget(): WidgetConfig {
     },
     layout: {
       columns: { desktop: 3, tablet: 2, mobile: 1 },
-      maxWidth: "1200px",
+      maxWidth: "100%",
       containerPadding: "2rem",
     },
     apiUrl: "https://ugia-mmeab.ondigitalocean.app/api/groups/b13bd078",

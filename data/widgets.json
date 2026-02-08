@@ -93,7 +93,7 @@
       "tablet": 2,
       "mobile": 1
     },
-    "maxWidth": "1200px",
+    "maxWidth": "100%",
     "containerPadding": "2rem"
   },
   "createdAt": "2026-01-31T10:15:49.536Z",

@@ -162,6 +162,6 @@ export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
     tablet: 2,
     mobile: 1,
   },
-  maxWidth: "1200px",
+  maxWidth: "100%",
   containerPadding: "2rem",
 };

@@ -57,23 +57,23 @@
   ],
   "styles": {
     "colors": {
-      "primary": "#3b82f6",
-      "secondary": "#6b7280",
+      "primary": "#0080FF",
+      "secondary": "#000000",
       "background": "#1f2937",
       "text": "#ffffff",
-      "label": "#9ca3af",
-      "positive": "#22c55e",
+      "label": "#ffffff",
+      "positive": "#00FF00",
       "negative": "#6b7280",
       "neutral": "#ffffff"
     },
     "fonts": {
       "family": "system-ui, -apple-system, sans-serif",
       "valueFontSize": "3rem",
-      "labelFontSize": "0.875rem",
+      "labelFontSize": "1.5rem",
       "titleFontSize": "1.25rem",
       "descriptionFontSize": "0.875rem",
       "valueWeight": 700,
-      "labelWeight": 500,
+      "labelWeight": 700,
       "titleWeight": 600
     },
     "borderRadius": 8,

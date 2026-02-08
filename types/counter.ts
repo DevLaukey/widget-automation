@@ -120,24 +120,24 @@ export const DEFAULT_ANIMATION_CONFIG: AnimationConfig = {
 };
 
 export const DEFAULT_COLOR_CONFIG: ColorConfig = {
-  primary: "#3b82f6",
-  secondary: "#6b7280",
+  primary: "#0080FF",
+  secondary: "#000000",
   background: "transparent",
-  text: "#1f2937",
-  label: "#6b7280",
-  positive: "#1f2937",
+  text: "#ffffff",
+  label: "#ffffff",
+  positive: "#00FF00",
   negative: "#6b7280",
-  neutral: "#1f2937",
+  neutral: "#ffffff",
 };
 
 export const DEFAULT_FONT_CONFIG: FontConfig = {
   family: "system-ui, -apple-system, sans-serif",
   valueFontSize: "3rem",
-  labelFontSize: "0.875rem",
+  labelFontSize: "1.5rem",
   titleFontSize: "1.25rem",
   descriptionFontSize: "0.875rem",
   valueWeight: 700,
-  labelWeight: 500,
+  labelWeight: 700,
   titleWeight: 600,
 };
 

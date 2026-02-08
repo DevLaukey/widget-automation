@@ -189,6 +189,14 @@ export function CardsTab() {
             Edit Card
           </h3>
 
+          {/* Header Label */}
+          <Field
+            label="Header Label"
+            value={selectedCard.label}
+            onChange={(v) => updateCard(selectedCard.id, { label: v })}
+            placeholder="e.g. KUMITE"
+          />
+
           {/* Logo Upload */}
           <ImageUpload
             label="Logo"
@@ -205,6 +213,22 @@ export function CardsTab() {
             onChange={(v) => updateCard(selectedCard.id, { title: v })}
             placeholder="e.g. Total Revenue"
           />
+
+          {/* Description / Event Details */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              Description
+            </label>
+            <textarea
+              value={selectedCard.description}
+              onChange={(e) =>
+                updateCard(selectedCard.id, { description: e.target.value })
+              }
+              placeholder={"e.g. Winter Classic\nGP KUMITE\nPRIZE NOGI"}
+              rows={3}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+            />
+          </div>
 
           {/* Value / Money Settings */}
           <div className="flex flex-col gap-3">

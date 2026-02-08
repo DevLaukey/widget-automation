@@ -17,8 +17,23 @@ function generateEmbedCode(config: WidgetConfig, proxyBase: string): string {
       const iconHtml = iconSrc
         ? `<img src="${iconSrc}" alt="" style="width:48px;height:48px;object-fit:contain;" />`
         : "";
+
+      // 1. Header label (e.g. "KUMITE")
+      const labelHtml = card.label
+        ? `<h2 style="margin:0;color:${styles.colors.text};font-size:${styles.fonts.labelFontSize};font-weight:${styles.fonts.labelWeight};font-family:${styles.fonts.family};text-transform:uppercase;-webkit-text-stroke:1px ${styles.colors.secondary};paint-order:stroke fill;">${card.label}</h2>`
+        : "";
+
+      // 2. Title / heading
       const titleHtml = card.title
         ? `<h3 style="margin:0;color:${styles.colors.text};font-size:${styles.fonts.titleFontSize};font-weight:${styles.fonts.titleWeight};font-family:${styles.fonts.family};">${card.title}</h3>`
+        : "";
+
+      // 3. Description / event details (blue text, multi-line)
+      const descLines = card.description
+        ? card.description.split("\n").map((l: string) => l.trim()).filter(Boolean).join("<br>")
+        : "";
+      const descHtml = descLines
+        ? `<div style="margin:0;color:${styles.colors.primary};font-size:${styles.fonts.descriptionFontSize};font-weight:600;font-family:${styles.fonts.family};text-transform:uppercase;text-align:left;line-height:1.4;width:100%;">${descLines}</div>`
         : "";
 
       // Show formatted end value as default so it works even without JS
@@ -31,9 +46,11 @@ function generateEmbedCode(config: WidgetConfig, proxyBase: string): string {
         : styles.colors.neutral;
 
       return `    <div class="${widgetId}-card" style="position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;padding:${styles.padding};min-height:${styles.cardMinHeight};">
+      ${labelHtml}
       ${iconHtml}
-      <p class="${widgetId}-value" data-start="${card.animation.startValue}" data-end="${card.animation.endValue}" data-duration="${card.animation.duration}" data-easing="${card.animation.easing}" data-decimals="${card.animation.decimalPlaces}" data-prefix="${card.animation.prefix}" data-suffix="${card.animation.suffix}" style="margin:0;font-variant-numeric:tabular-nums;color:${endColor};font-size:${styles.fonts.valueFontSize};font-weight:${styles.fonts.valueWeight};font-family:${styles.fonts.family};line-height:1.1;transition:color 0.3s;">${card.animation.prefix}${formattedEnd}${card.animation.suffix}</p>
+      <p class="${widgetId}-value" data-start="${card.animation.startValue}" data-end="${card.animation.endValue}" data-duration="${card.animation.duration}" data-easing="${card.animation.easing}" data-decimals="${card.animation.decimalPlaces}" data-prefix="${card.animation.prefix}" data-suffix="${card.animation.suffix}" style="margin:0;font-variant-numeric:tabular-nums;color:${endColor};font-size:${styles.fonts.valueFontSize};font-weight:${styles.fonts.valueWeight};font-style:italic;font-family:${styles.fonts.family};line-height:1.1;transition:color 0.3s;">${card.animation.prefix}${formattedEnd}${card.animation.suffix}</p>
       ${titleHtml}
+      ${descHtml}
     </div>`;
     })
     .join("\n");

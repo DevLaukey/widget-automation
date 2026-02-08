@@ -10,16 +10,29 @@ function generateEmbedCode(config: WidgetConfig, proxyBase: string): string {
 
   const cardHtml = cards
     .map((card) => {
-      const iconHtml = card.icon
-        ? `<img src="${card.icon}" alt="" style="width:48px;height:48px;object-fit:contain;" />`
+      // Make image paths absolute for cross-origin embedding
+      const iconSrc = card.icon
+        ? card.icon.startsWith("data:") ? card.icon : `${proxyBase}${card.icon}`
+        : "";
+      const iconHtml = iconSrc
+        ? `<img src="${iconSrc}" alt="" style="width:48px;height:48px;object-fit:contain;" />`
         : "";
       const titleHtml = card.title
         ? `<h3 style="margin:0;color:${styles.colors.text};font-size:${styles.fonts.titleFontSize};font-weight:${styles.fonts.titleWeight};font-family:${styles.fonts.family};">${card.title}</h3>`
         : "";
 
+      // Show formatted end value as default so it works even without JS
+      const formattedEnd = card.animation.endValue.toLocaleString("en-US", {
+        minimumFractionDigits: card.animation.decimalPlaces,
+        maximumFractionDigits: card.animation.decimalPlaces,
+      });
+      const endColor = card.animation.endValue > 0 ? styles.colors.positive
+        : card.animation.endValue < 0 ? styles.colors.negative
+        : styles.colors.neutral;
+
       return `    <div class="${widgetId}-card" style="position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;padding:${styles.padding};min-height:${styles.cardMinHeight};">
       ${iconHtml}
-      <p class="${widgetId}-value" data-start="${card.animation.startValue}" data-end="${card.animation.endValue}" data-duration="${card.animation.duration}" data-easing="${card.animation.easing}" data-decimals="${card.animation.decimalPlaces}" data-prefix="${card.animation.prefix}" data-suffix="${card.animation.suffix}" style="margin:0;font-variant-numeric:tabular-nums;color:${styles.colors.neutral};font-size:${styles.fonts.valueFontSize};font-weight:${styles.fonts.valueWeight};font-family:${styles.fonts.family};line-height:1.1;transition:color 0.3s;">${card.animation.prefix}${card.animation.startValue}${card.animation.suffix}</p>
+      <p class="${widgetId}-value" data-start="${card.animation.startValue}" data-end="${card.animation.endValue}" data-duration="${card.animation.duration}" data-easing="${card.animation.easing}" data-decimals="${card.animation.decimalPlaces}" data-prefix="${card.animation.prefix}" data-suffix="${card.animation.suffix}" style="margin:0;font-variant-numeric:tabular-nums;color:${endColor};font-size:${styles.fonts.valueFontSize};font-weight:${styles.fonts.valueWeight};font-family:${styles.fonts.family};line-height:1.1;transition:color 0.3s;">${card.animation.prefix}${formattedEnd}${card.animation.suffix}</p>
       ${titleHtml}
     </div>`;
     })

@@ -378,18 +378,43 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     redoStack: [],
   });
 
-  // Load saved widget data from local file on mount
+  // Load saved widget data from local file on mount, then auto-fetch API values
   useEffect(() => {
     fetch("/api/widget")
       .then((res) => res.json())
       .then((data) => {
         if (data && data.id) {
           dispatch({ type: "SET_WIDGET", payload: data });
+          return data;
         }
+        return null;
+      })
+      .then((widget) => {
+        const apiUrl = widget?.apiUrl || state.widget.apiUrl;
+        if (!apiUrl) return;
+        return fetch(`/api/proxy?url=${encodeURIComponent(apiUrl)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            const apiCards = data?.cards || [];
+            const cards = widget?.cards || state.widget.cards;
+            const max = Math.min(cards.length, apiCards.length);
+            for (let i = 0; i < max; i++) {
+              if (apiCards[i].endValue != null) {
+                dispatch({
+                  type: "UPDATE_CARD_ANIMATION",
+                  payload: {
+                    cardId: cards[i].id,
+                    animation: { endValue: apiCards[i].endValue },
+                  },
+                });
+              }
+            }
+          });
       })
       .catch(() => {
-        // No saved data, use defaults
+        // No saved data or API fetch failed, use defaults
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-save when widget changes (debounced)

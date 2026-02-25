@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Orbitron } from "next/font/google";
+import { Geist, Geist_Mono, Orbitron, Barlow_Condensed, Rajdhani } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,6 +18,19 @@ const orbitron = Orbitron({
   variable: "--font-orbitron",
 });
 
+const barlowCondensed = Barlow_Condensed({
+  weight: ["900"],
+  style: ["italic"],
+  subsets: ["latin"],
+  variable: "--font-barlow-condensed",
+});
+
+const rajdhani = Rajdhani({
+  weight: ["600"],
+  subsets: ["latin"],
+  variable: "--font-rajdhani",
+});
+
 export const metadata: Metadata = {
   title: "Counter Widget Builder",
   description: "Create and customize animated counter card widgets",
@@ -31,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${orbitron.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${orbitron.variable} ${barlowCondensed.variable} ${rajdhani.variable} antialiased`}
       >
         {children}
       </body>

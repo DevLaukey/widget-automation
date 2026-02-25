@@ -24,3 +24,32 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ============================================================
+   BJJ Widget Animations
+   ============================================================ */
+
+@keyframes bjjSparkLoop {
+  0%   { filter: drop-shadow(0 0 6px gold) drop-shadow(0 0 3px silver); }
+  15%  { filter: drop-shadow(3px -3px 14px #ffd700) drop-shadow(-1px 1px 7px silver) drop-shadow(0 0 20px gold); }
+  30%  { filter: drop-shadow(-3px 2px 8px silver) drop-shadow(2px -2px 18px #ffd700) drop-shadow(0 0 5px silver); }
+  45%  { filter: drop-shadow(2px 3px 18px gold) drop-shadow(-3px -1px 5px silver); }
+  60%  { filter: drop-shadow(-2px -3px 6px silver) drop-shadow(3px 2px 14px gold) drop-shadow(0 0 10px #fffacd); }
+  75%  { filter: drop-shadow(1px -2px 12px #ffd700) drop-shadow(-2px 3px 8px silver) drop-shadow(0 0 18px gold); }
+  100% { filter: drop-shadow(0 0 6px gold) drop-shadow(0 0 3px silver); }
+}
+
+@keyframes bjjRgbShift {
+  0%   { filter: drop-shadow(0 0 18px #f4b0f5) drop-shadow(0 0 8px #ff00aa); }
+  33%  { filter: drop-shadow(0 0 18px #00ff41) drop-shadow(0 0 8px #00cc33); }
+  66%  { filter: drop-shadow(0 0 18px #2ea4ff) drop-shadow(0 0 8px #0044ff); }
+  100% { filter: drop-shadow(0 0 18px #f4b0f5) drop-shadow(0 0 8px #ff00aa); }
+}
+
+.bjj-logo-spark {
+  animation: bjjSparkLoop 0.7s steps(5) infinite;
+}
+
+.bjj-logo-rgb {
+  animation: bjjRgbShift 0.7s linear infinite;
+}

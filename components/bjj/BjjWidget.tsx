@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BjjLogo } from "./BjjLogo";
+import Image from "next/image";
 
 export interface BjjConfig {
   amount: string;
@@ -84,7 +84,14 @@ export function BjjWidget({ config }: BjjWidgetProps) {
     >
       {/* Logo */}
       <div className={isLooping ? "bjj-logo-spark" : "bjj-logo-rgb"}>
-        <BjjLogo />
+        <Image
+          src="/images/logo-widget 2.png"
+          alt="Widget Logo"
+          width={220}
+          height={220}
+          style={{ display: "block" }}
+          priority
+        />
       </div>
 
       {/* Dollar Amount */}
@@ -96,7 +103,7 @@ export function BjjWidget({ config }: BjjWidgetProps) {
           fontSize: "clamp(72px, 20vw, 148px)",
           lineHeight: 1,
           color: "#00ff41",
-          textShadow: "0 0 18px #00ff41, 0 0 40px #00ff41, 0 0 80px #00cc33, 0 0 120px #009922",
+          textShadow: "0 0 8px #00ff41, 0 0 20px #00cc33",
           textTransform: "uppercase",
           marginTop: "24px",
           letterSpacing: "-0.02em",

@@ -29,27 +29,32 @@ body {
    BJJ Widget Animations
    ============================================================ */
 
-@keyframes bjjSparkLoop {
-  0%   { filter: drop-shadow(0 0 6px gold) drop-shadow(0 0 3px silver); }
-  15%  { filter: drop-shadow(3px -3px 14px #ffd700) drop-shadow(-1px 1px 7px silver) drop-shadow(0 0 20px gold); }
-  30%  { filter: drop-shadow(-3px 2px 8px silver) drop-shadow(2px -2px 18px #ffd700) drop-shadow(0 0 5px silver); }
-  45%  { filter: drop-shadow(2px 3px 18px gold) drop-shadow(-3px -1px 5px silver); }
-  60%  { filter: drop-shadow(-2px -3px 6px silver) drop-shadow(3px 2px 14px gold) drop-shadow(0 0 10px #fffacd); }
-  75%  { filter: drop-shadow(1px -2px 12px #ffd700) drop-shadow(-2px 3px 8px silver) drop-shadow(0 0 18px gold); }
-  100% { filter: drop-shadow(0 0 6px gold) drop-shadow(0 0 3px silver); }
+@keyframes electricSpark {
+  0%   { transform: scale(1);    filter: drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 15px #FFD700); }
+  12%  { transform: scale(1.08); filter: drop-shadow(0 0 12px #C0C0C0) drop-shadow(0 0 25px #C0C0C0) drop-shadow(0 0 35px #FFD700); }
+  25%  { transform: scale(1.12); filter: drop-shadow(0 0 18px #FFD700) drop-shadow(0 0 30px #FFD700) drop-shadow(0 0 45px #FFFFFF); }
+  37%  { transform: scale(1.06); filter: drop-shadow(0 0 14px #C0C0C0) drop-shadow(0 0 28px #C0C0C0) drop-shadow(0 0 40px #FFD700); }
+  50%  { transform: scale(1.15); filter: drop-shadow(0 0 22px #FFFFFF) drop-shadow(0 0 35px #FFFFFF) drop-shadow(0 0 50px #FFD700); }
+  62%  { transform: scale(1.04); filter: drop-shadow(0 0 16px #FFD700) drop-shadow(0 0 32px #FFD700) drop-shadow(0 0 42px #C0C0C0); }
+  75%  { transform: scale(1.10); filter: drop-shadow(0 0 20px #C0C0C0) drop-shadow(0 0 38px #C0C0C0) drop-shadow(0 0 55px #FFFFFF); }
+  87%  { transform: scale(1.02); filter: drop-shadow(0 0 10px #FFD700) drop-shadow(0 0 20px #FFD700) drop-shadow(0 0 30px #C0C0C0); }
+  100% { transform: scale(1);    filter: drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 15px #FFD700); }
 }
 
-@keyframes bjjRgbShift {
-  0%   { filter: drop-shadow(0 0 18px #f4b0f5) drop-shadow(0 0 8px #ff00aa); }
-  33%  { filter: drop-shadow(0 0 18px #00ff41) drop-shadow(0 0 8px #00cc33); }
-  66%  { filter: drop-shadow(0 0 18px #2ea4ff) drop-shadow(0 0 8px #0044ff); }
-  100% { filter: drop-shadow(0 0 18px #f4b0f5) drop-shadow(0 0 8px #ff00aa); }
+@keyframes brainThrobIntense {
+  0%   { transform: scale(1);    filter: drop-shadow(0 0 15px #ff0066) drop-shadow(0 0 30px #ff0066); }
+  25%  { transform: scale(1.12); filter: drop-shadow(0 0 25px #66ff00) drop-shadow(0 0 50px #66ff00); }
+  50%  { transform: scale(1.18); filter: drop-shadow(0 0 35px #0099ff) drop-shadow(0 0 70px #0099ff); }
+  75%  { transform: scale(1.12); filter: drop-shadow(0 0 25px #0099ff) drop-shadow(0 0 50px #0099ff); }
+  100% { transform: scale(1);    filter: drop-shadow(0 0 15px #ff0066) drop-shadow(0 0 30px #ff0066); }
 }
 
 .bjj-logo-spark {
-  animation: bjjSparkLoop 0.7s steps(5) infinite;
+  animation: electricSpark 0.7s ease-in-out infinite;
+  transform-origin: center;
 }
 
 .bjj-logo-rgb {
-  animation: bjjRgbShift 0.7s linear infinite;
+  animation: brainThrobIntense 0.7s ease-in-out infinite;
+  transform-origin: center;
 }

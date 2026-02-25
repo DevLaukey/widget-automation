@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  BjjWidget,
-  DEFAULT_BJJ_CONFIG,
-  DEFAULT_BJJ_ATTACKS,
-} from "./BjjWidget";
+import { BjjWidget, DEFAULT_BJJ_CONFIG, DEFAULT_BJJ_ATTACKS } from "./BjjWidget";
 import type { BjjConfig } from "./BjjWidget";
 
 // ─── Embed code generator ─────────────────────────────────────────────────────
@@ -188,7 +184,7 @@ body { background: transparent; }
 
 export function BjjEditorShell() {
   const [config, setConfig] = useState<BjjConfig>(DEFAULT_BJJ_CONFIG);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied]       = useState(false);
   const [activeTab, setActiveTab] = useState<"config" | "export">("config");
 
   const update = (patch: Partial<BjjConfig>) =>
@@ -235,12 +231,9 @@ export function BjjEditorShell() {
             <>
               {/* Server info banner */}
               <div className="rounded-lg bg-gray-800 border border-gray-700 p-3 text-xs text-gray-400 space-y-1">
-                <p className="font-semibold text-gray-300">
-                  Server-driven mode
-                </p>
+                <p className="font-semibold text-gray-300">Server-driven mode</p>
                 <p>
-                  Attack cycling and mode (loop / event) are controlled live
-                  via:
+                  Attack cycling and mode (loop / event) are controlled live via:
                 </p>
                 <code className="block text-blue-400 break-all mt-1">
                   ugia-mmeab.ondigitalocean.app/api/aras25/status
@@ -296,10 +289,14 @@ export function BjjEditorShell() {
           {activeTab === "export" && (
             <div className="space-y-4">
               <p className="text-sm text-gray-400">
-                Self-contained HTML — paste anywhere. Fetches live data from the
-                server and handles looping / event mode automatically.
+                Self-contained HTML — paste anywhere. Fetches live data from
+                the server and handles looping / event mode automatically.
               </p>
-
+              <div className="rounded-lg bg-yellow-900/30 border border-yellow-700/40 p-3 text-xs text-yellow-300">
+                ⚠ Update the <code>src</code> of the logo{" "}
+                <code>&lt;img&gt;</code> to the full public URL of your hosted
+                image before deploying.
+              </div>
               <button
                 onClick={copyEmbed}
                 className={`w-full py-3 rounded-lg text-sm font-semibold transition-colors ${

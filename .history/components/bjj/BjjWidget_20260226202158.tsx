@@ -293,8 +293,8 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
         <img
           src="/logo-widget.svg"
           alt="Widget Logo"
-          width={920}
-          height={920}
+          width={600}
+          height={600}
           style={{ display: "block" }}
         />
       </div>

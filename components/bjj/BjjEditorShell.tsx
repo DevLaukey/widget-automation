@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   BjjWidget,
   DEFAULT_BJJ_CONFIG,
@@ -10,7 +10,7 @@ import type { BjjConfig } from "./BjjWidget";
 
 // ─── Embed code generator ─────────────────────────────────────────────────────
 
-function generateEmbedCode(config: BjjConfig): string {
+function generateEmbedCode(config: BjjConfig, origin: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -79,7 +79,7 @@ body { background: transparent; }
 <div class="bjj-widget mode-loop" id="bjj-root">
   <!-- IMPORTANT: Update the logo src to the full URL of your hosted SVG -->
   <div class="bjj-logo-spark" id="bjj-logo-wrap">
-    <img src="/logo-widget.svg" alt="Widget Logo" width="220" height="220" style="display:block;">
+    <img src="${origin}/logo-widget.svg" alt="Widget Logo" width="220" height="220" style="display:block;">
   </div>
   <div class="bjj-amount">${config.amount}</div>
   <div class="bjj-label" id="bjj-label">${config.eventLabel}</div>
@@ -190,12 +190,17 @@ export function BjjEditorShell() {
   const [config, setConfig] = useState<BjjConfig>(DEFAULT_BJJ_CONFIG);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<"config" | "export">("config");
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   const update = (patch: Partial<BjjConfig>) =>
     setConfig((c) => ({ ...c, ...patch }));
 
   const copyEmbed = () => {
-    navigator.clipboard.writeText(generateEmbedCode(config)).then(() => {
+    navigator.clipboard.writeText(generateEmbedCode(config, origin)).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -311,7 +316,7 @@ export function BjjEditorShell() {
                 {copied ? "✓ Copied!" : "Copy Embed HTML"}
               </button>
               <pre className="text-xs text-gray-400 bg-gray-800 rounded-lg p-3 overflow-auto max-h-80 whitespace-pre-wrap break-all border border-gray-700">
-                {generateEmbedCode(config)}
+                {generateEmbedCode(config, origin)}
               </pre>
             </div>
           )}

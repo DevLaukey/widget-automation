@@ -20,7 +20,7 @@ interface ServerState {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const API_STATUS = "https://ugia-mmeab.ondigitalocean.app/api/aras25/status";
-const API_TEXT = "https://ugia-mmeab.ondigitalocean.app/api/aras25/attack/text";
+const API_TEXT   = "https://ugia-mmeab.ondigitalocean.app/api/aras25/attack/text";
 const SYNC_INTERVAL = 3000;
 const LOOP_INTERVAL = 200;
 
@@ -114,16 +114,16 @@ export const DEFAULT_BJJ_CONFIG: BjjConfig = {
 export function BjjWidget({ config }: { config: BjjConfig }) {
   const { amount, eventLabel } = config;
 
-  const [isLooping, setIsLooping] = useState(true);
+  const [isLooping, setIsLooping]       = useState(true);
   const [displayAttack, setDisplayAttack] = useState("");
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected]   = useState(false);
 
   // Refs so interval callbacks always see fresh values
-  const localAttacksRef = useRef<string[]>([...DEFAULT_BJJ_ATTACKS]);
-  const isLoopingRef = useRef(true);
+  const localAttacksRef  = useRef<string[]>([...DEFAULT_BJJ_ATTACKS]);
+  const isLoopingRef     = useRef(true);
   const currentAttackRef = useRef("");
-  const loopRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isSyncingRef = useRef(false);
+  const loopRef          = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isSyncingRef     = useRef(false);
 
   // ── Loop control ────────────────────────────────────────────────────────────
 
@@ -242,12 +242,12 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
 
   // ── Derived styles ────────────────────────────────────────────────────────────
 
-  const attackColor = isLooping ? "rgb(46,164,255)" : "rgb(244,176,245)";
-  const attackGlow = isLooping
+  const attackColor = isLooping ? "rgb(46,164,255)"   : "rgb(244,176,245)";
+  const attackGlow  = isLooping
     ? "0 0 15px rgba(0,255,255,0.8), 0 0 30px rgba(255,0,255,0.6)"
     : "0 0 20px rgba(0,153,255,0.9), 0 0 40px rgba(255,0,102,0.7)";
-  const labelColor = isLooping ? "#a0cfff" : "#e8c8f8";
-  const labelGlow = isLooping
+  const labelColor  = isLooping ? "#a0cfff" : "#e8c8f8";
+  const labelGlow   = isLooping
     ? "0 0 8px rgba(46,164,255,0.3)"
     : "0 0 8px rgba(244,176,245,0.3)";
 
@@ -270,11 +270,7 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
     >
       {/* Connection dot */}
       <div
-        title={
-          isConnected
-            ? "Live — connected to server"
-            : "Offline — using defaults"
-        }
+        title={isConnected ? "Live — connected to server" : "Offline — using defaults"}
         style={{
           position: "absolute",
           top: 14,
@@ -293,8 +289,8 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
         <img
           src="/logo-widget.svg"
           alt="Widget Logo"
-          width={920}
-          height={920}
+          width={220}
+          height={220}
           style={{ display: "block" }}
         />
       </div>
@@ -302,8 +298,7 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
       {/* Dollar Amount */}
       <div
         style={{
-          fontFamily:
-            "var(--font-barlow-condensed), 'Barlow Condensed', sans-serif",
+          fontFamily: "var(--font-barlow-condensed), 'Barlow Condensed', sans-serif",
           fontWeight: 900,
           fontStyle: "italic",
           fontSize: "clamp(72px, 20vw, 148px)",
@@ -341,8 +336,7 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
       {/* Attack Name */}
       <div
         style={{
-          fontFamily:
-            "var(--font-barlow-condensed), 'Barlow Condensed', sans-serif",
+          fontFamily: "var(--font-barlow-condensed), 'Barlow Condensed', sans-serif",
           fontWeight: 900,
           fontStyle: "italic",
           fontSize: "clamp(28px, 7vw, 64px)",

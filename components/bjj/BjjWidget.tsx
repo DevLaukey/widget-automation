@@ -117,6 +117,7 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
   const [isLooping, setIsLooping] = useState(true);
   const [displayAttack, setDisplayAttack] = useState("");
   const [isConnected, setIsConnected] = useState(false);
+  const [displayEventLabel, setDisplayEventLabel] = useState(eventLabel);
 
   // Refs so interval callbacks always see fresh values
   const localAttacksRef = useRef<string[]>([...DEFAULT_BJJ_ATTACKS]);
@@ -183,6 +184,11 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
       // Update attacks list if server provides one
       if (Array.isArray(data.attacks) && data.attacks.length > 0) {
         localAttacksRef.current = data.attacks;
+      }
+
+      // Update event label if server provides one
+      if (data.currentEvent?.name) {
+        setDisplayEventLabel(data.currentEvent.name);
       }
 
       const shouldLoop = !!data.isLooping;
@@ -335,7 +341,7 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
           transition: "color 0.4s ease, text-shadow 0.4s ease",
         }}
       >
-        {eventLabel}
+        {displayEventLabel}
       </div>
 
       {/* Attack Name */}

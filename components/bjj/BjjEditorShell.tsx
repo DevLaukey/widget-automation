@@ -77,7 +77,6 @@ body { background: transparent; }
 </head>
 <body>
 <div class="bjj-widget mode-loop" id="bjj-root">
-  <!-- IMPORTANT: Update the logo src to the full URL of your hosted SVG -->
   <div class="bjj-logo-spark" id="bjj-logo-wrap">
     <img src="${origin}/logo-widget.svg" alt="Widget Logo" width="660" height="660" style="display:block;">
   </div>
@@ -301,9 +300,15 @@ export function BjjEditorShell() {
           {activeTab === "export" && (
             <div className="space-y-4">
               <p className="text-sm text-gray-400">
-                Self-contained HTML — paste anywhere. Fetches live data from the
-                server and handles looping / event mode automatically.
+                For streaming/OBS, use the direct embed URL below. For
+                copy-paste HTML, use the button beneath it.
               </p>
+
+              {/* Direct embed URL */}
+              <div className="rounded-lg bg-gray-800 border border-gray-700 p-3 text-xs space-y-1">
+                <p className="text-gray-400 font-medium">Direct embed URL (iframe / OBS Browser Source)</p>
+                <code className="block text-blue-400 break-all">{origin}/bjj</code>
+              </div>
 
               <button
                 onClick={copyEmbed}

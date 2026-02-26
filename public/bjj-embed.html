@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BJJ Widget</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,900&family=Rajdhani:wght@600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: transparent;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @keyframes electricSpark {
+      0%   { transform: scale(1);    filter: drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 15px #FFD700); }
+      12%  { transform: scale(1.08); filter: drop-shadow(0 0 12px #C0C0C0) drop-shadow(0 0 25px #C0C0C0) drop-shadow(0 0 35px #FFD700); }
+      25%  { transform: scale(1.12); filter: drop-shadow(0 0 18px #FFD700) drop-shadow(0 0 30px #FFD700) drop-shadow(0 0 45px #FFFFFF); }
+      37%  { transform: scale(1.06); filter: drop-shadow(0 0 14px #C0C0C0) drop-shadow(0 0 28px #C0C0C0) drop-shadow(0 0 40px #FFD700); }
+      50%  { transform: scale(1.15); filter: drop-shadow(0 0 22px #FFFFFF) drop-shadow(0 0 35px #FFFFFF) drop-shadow(0 0 50px #FFD700); }
+      62%  { transform: scale(1.04); filter: drop-shadow(0 0 16px #FFD700) drop-shadow(0 0 32px #FFD700) drop-shadow(0 0 42px #C0C0C0); }
+      75%  { transform: scale(1.10); filter: drop-shadow(0 0 20px #C0C0C0) drop-shadow(0 0 38px #C0C0C0) drop-shadow(0 0 55px #FFFFFF); }
+      87%  { transform: scale(1.02); filter: drop-shadow(0 0 10px #FFD700) drop-shadow(0 0 20px #FFD700) drop-shadow(0 0 30px #C0C0C0); }
+      100% { transform: scale(1);    filter: drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 15px #FFD700); }
+    }
+
+    @keyframes brainThrobIntense {
+      0%   { transform: scale(1);    filter: drop-shadow(0 0 15px #ff0066) drop-shadow(0 0 30px #ff0066); }
+      25%  { transform: scale(1.12); filter: drop-shadow(0 0 25px #66ff00) drop-shadow(0 0 50px #66ff00); }
+      50%  { transform: scale(1.18); filter: drop-shadow(0 0 35px #0099ff) drop-shadow(0 0 70px #0099ff); }
+      75%  { transform: scale(1.12); filter: drop-shadow(0 0 25px #0099ff) drop-shadow(0 0 50px #0099ff); }
+      100% { transform: scale(1);    filter: drop-shadow(0 0 15px #ff0066) drop-shadow(0 0 30px #ff0066); }
+    }
+
+    .bjj-logo-spark { animation: electricSpark 0.7s ease-in-out infinite; transform-origin: center; }
+    .bjj-logo-rgb   { animation: brainThrobIntense 0.7s ease-in-out infinite; transform-origin: center; }
+
+    #bjj-widget {
+      max-width: 680px;
+      width: 100%;
+      margin: 0 auto;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 24px 48px;
+      position: relative;
+    }
+
+    #conn-dot {
+      position: absolute;
+      top: 14px; right: 14px;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #666;
+    }
+    #conn-dot.live { background: #00ff41; box-shadow: 0 0 6px #00ff41; }
+
+    #logo-wrap img { display: block; }
+
+    #amount {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-style: italic;
+      font-size: clamp(72px, 20vw, 148px);
+      line-height: 1;
+      color: #00ff41;
+      text-shadow: 0 0 8px #00ff41, 0 0 20px #00cc33;
+      text-transform: uppercase;
+      margin-top: 24px;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    #event-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      font-size: clamp(13px, 2.2vw, 18px);
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      margin-top: 10px;
+      text-align: center;
+      opacity: 0.88;
+      transition: color 0.4s ease, text-shadow 0.4s ease;
+    }
+
+    #attack-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-style: italic;
+      font-size: clamp(28px, 7vw, 64px);
+      line-height: 1.1;
+      text-transform: uppercase;
+      margin-top: 20px;
+      text-align: center;
+      letter-spacing: 0.02em;
+      min-height: 1.1em;
+      transition: color 0.4s ease, text-shadow 0.4s ease;
+    }
+
+    /* looping state */
+    .state-loop #event-label {
+      color: #a0cfff;
+      text-shadow: 0 0 8px rgba(46,164,255,0.3);
+    }
+    .state-loop #attack-name {
+      color: rgb(46,164,255);
+      text-shadow: 0 0 15px rgba(0,255,255,0.8), 0 0 30px rgba(255,0,255,0.6);
+    }
+
+    /* stopped state */
+    .state-stop #event-label {
+      color: #e8c8f8;
+      text-shadow: 0 0 8px rgba(244,176,245,0.3);
+    }
+    .state-stop #attack-name {
+      color: rgb(244,176,245);
+      text-shadow: 0 0 20px rgba(0,153,255,0.9), 0 0 40px rgba(255,0,102,0.7);
+    }
+  </style>
+</head>
+<body>
+  <div id="bjj-widget" class="state-loop">
+    <div id="conn-dot" title="Offline — using defaults"></div>
+
+    <div id="logo-wrap" class="bjj-logo-spark">
+      <img src="https://widget-automation.vercel.app/logo-widget.svg" alt="Widget Logo" width="920" height="920" />
+    </div>
+
+    <div id="amount">$5,000</div>
+    <div id="event-label">SUBMISSION BONUS — FIGHT NIGHT</div>
+    <div id="attack-name"></div>
+  </div>
+
+  <script>
+    const API_STATUS   = 'https://ugia-mmeab.ondigitalocean.app/api/aras25/status';
+    const API_TEXT     = 'https://ugia-mmeab.ondigitalocean.app/api/aras25/attack/text';
+    const SYNC_INTERVAL = 3000;
+    const LOOP_INTERVAL = 200;
+
+    const ATTACKS = [
+      "Figure 4 Knee Bar","Cryangle","Back CNTRL + Buggy Choke",
+      "RDLR + KOTD+ Crab Ride + Back + Arm Bar","Shin-bolo + Saddle + Heelhook",
+      "Inside Heel Hook + Game Over Position","Caveman Necktie from Back Mount",
+      "Backside - Outside heel hook","K Guard + Arm Saddle + Tarikoplata",
+      "Reverse X + 411 + Heel Hook","Z lock","Clover Leaf","50/50 + Arm Bar",
+      "Octopus GUARD + Calf Slicer","Bow & Arrow (Gi or Nogi)",
+      "Caveman Necktie from Front Head Lock","Kosovo Cradle","K Guard Triangle",
+      "Scythe Arm Bar","BOTTOM HALF GUARD + KNEE BAR (on opposite knee)",
+      "WAITER SWEEP + BACK + RNC","Deep Half + ROLL + Dog Bar",
+      "Octopus Guard (bottom) + Arm Bar","Reverse DLR + Knee Bar","Bicep Slicer",
+      "Buggy Choke from Back","Bolo + Body lock + RNC","Dog Fight + Rolling Knee Bar",
+      "50/50 + Darce Choke","Wrist lock (top side control)","Lapel guard + Arm bar",
+      "Baseball bat choke","Closed Guard + Arm Bar (shot gun)","Nogi Baseball Bat Choke",
+      "Flying Triangle","K Guard + Arm Bar","Wrist lock (bottom position)",
+      "Butterfly guard + Arm bar","Choi Bar (complete w/ arm saddle)",
+      "Lasso Guard + Spinning Triangle","Side control + step over arm bar",
+      "Flying Guillotine","Kimura Trap + Arm Bar","Double Arm Bar from Closed Guard",
+      "Squid guard + RNC","Tarikoplata","Baratoplata","Knee On Belly + Mothers Milk",
+      "Wheelchair Omoplata","Gogoplata","Triangle (no arm variation)",
+      "Japanese necktie","Peruvian neck tie","Guillotine (Arm in)",
+      "Body Triangle + Ezekiel Choke","Octopus guard + back + rnc",
+      "Crucifix + wrist lock","Reverse Triangle","Squid Guard + Knee bar",
+      "K Guard + Knee Bar","Knee On Belly + Nearside Arm Bar","Banana Split",
+      "Knee On Belly Far Side Arm Bar","Crucifix + Choke","5050 + Darce Choke",
+      "Dog Fight + Gator roll + Dog Bar","Buggy Choke from bottom","Bow & Arrow",
+      "Buggy choke from back","Bicep Slicer from Top Side Control",
+      "Octopus Guard + Calf Slicer","Rolling Bow & Arrow","Lapel set up + Wristlock",
+      "Crucifix Wrist Lock","Head & Arm Choke + Buggy Choke","5050 + Wristlock",
+      "Buggy Choke from Top Side"
+    ];
+
+    // ── DOM refs ────────────────────────────────────────────────────────────────
+    const widget      = document.getElementById('bjj-widget');
+    const connDot     = document.getElementById('conn-dot');
+    const logoWrap    = document.getElementById('logo-wrap');
+    const eventLabel  = document.getElementById('event-label');
+    const attackName  = document.getElementById('attack-name');
+
+    // ── State ───────────────────────────────────────────────────────────────────
+    let attacks       = [...ATTACKS];
+    let isLooping     = true;
+    let currentAttack = '';
+    let loopTimer     = null;
+    let isSyncing     = false;
+
+    // ── Helpers ─────────────────────────────────────────────────────────────────
+    function setLoopingState(looping) {
+      isLooping = looping;
+      widget.className = looping ? 'state-loop' : 'state-stop';
+      logoWrap.className = looping ? 'bjj-logo-spark' : 'bjj-logo-rgb';
+    }
+
+    function setConnected(ok) {
+      connDot.className = ok ? 'live' : '';
+      connDot.title = ok ? 'Live — connected to server' : 'Offline — using defaults';
+    }
+
+    // ── Loop control ─────────────────────────────────────────────────────────────
+    function startLoop() {
+      if (loopTimer) return;
+      loopTimer = setInterval(() => {
+        const a = attacks[Math.floor(Math.random() * attacks.length)];
+        currentAttack = a;
+        attackName.textContent = a;
+      }, LOOP_INTERVAL);
+    }
+
+    function stopLoop() {
+      if (loopTimer) { clearInterval(loopTimer); loopTimer = null; }
+    }
+
+    // ── Server sync ──────────────────────────────────────────────────────────────
+    async function sync() {
+      if (isSyncing) return;
+      isSyncing = true;
+      try {
+        let data = null;
+
+        try {
+          const r = await fetch(API_STATUS, { cache: 'no-cache' });
+          if (r.ok) { data = await r.json(); setConnected(true); }
+        } catch {
+          try {
+            const r = await fetch(API_TEXT, { cache: 'no-cache' });
+            if (r.ok) {
+              const t = await r.text();
+              data = { isLooping: true, currentAttack: t.trim() };
+              setConnected(true);
+            }
+          } catch { setConnected(false); }
+        }
+
+        if (!data) { setConnected(false); return; }
+
+        if (Array.isArray(data.attacks) && data.attacks.length > 0) attacks = data.attacks;
+
+        if (data.currentEvent && data.currentEvent.name) {
+          eventLabel.textContent = data.currentEvent.name;
+        }
+
+        const shouldLoop = !!data.isLooping;
+
+        if (shouldLoop !== isLooping) {
+          setLoopingState(shouldLoop);
+          if (shouldLoop) {
+            startLoop();
+          } else {
+            stopLoop();
+            const a = data.selectedAttackOnStop || data.currentAttack || currentAttack;
+            currentAttack = a || '';
+            attackName.textContent = currentAttack;
+          }
+        } else if (!shouldLoop) {
+          const a = data.selectedAttackOnStop || data.currentAttack || currentAttack;
+          if (a && a !== currentAttack) {
+            currentAttack = a;
+            attackName.textContent = a;
+          }
+        }
+      } finally {
+        isSyncing = false;
+      }
+    }
+
+    // ── Boot ─────────────────────────────────────────────────────────────────────
+    setLoopingState(true);
+    startLoop();
+    sync();
+    setInterval(sync, SYNC_INTERVAL);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') sync();
+    });
+  </script>
+</body>
+</html>

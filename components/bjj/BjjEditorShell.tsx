@@ -79,7 +79,7 @@ body { background: transparent; }
 <div class="bjj-widget mode-loop" id="bjj-root">
   <!-- IMPORTANT: Update the logo src to the full URL of your hosted SVG -->
   <div class="bjj-logo-spark" id="bjj-logo-wrap">
-    <img src="${origin}/logo-widget.svg" alt="Widget Logo" width="220" height="220" style="display:block;">
+    <img src="${origin}/logo-widget.svg" alt="Widget Logo" width="660" height="660" style="display:block;">
   </div>
   <div class="bjj-amount">${config.amount}</div>
   <div class="bjj-label" id="bjj-label">${config.eventLabel}</div>

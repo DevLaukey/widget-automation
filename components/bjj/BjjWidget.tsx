@@ -19,89 +19,86 @@ interface ServerState {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const API_STATUS = "https://ugia-mmeab.ondigitalocean.app/api/aras25/status";
-const API_TEXT = "https://ugia-mmeab.ondigitalocean.app/api/aras25/attack/text";
+const API_BASE    = "https://ugia-mmeab.ondigitalocean.app";
+const API_STATUS  = `${API_BASE}/api/aras25/status`;
+const API_TEXT    = `${API_BASE}/api/aras25/attack/text`;
+const API_CURRENT = `${API_BASE}/api/aras25/current-attack`;
 const SYNC_INTERVAL = 3000;
 const LOOP_INTERVAL = 200;
 
 export const DEFAULT_BJJ_ATTACKS = [
-  "Figure 4 Knee Bar",
+  "Knee Bar",
   "Cryangle",
-  "Back CNTRL + Buggy Choke",
-  "RDLR + KOTD+ Crab Ride + Back + Arm Bar",
-  "Shin-bolo + Saddle + Heelhook",
-  "Inside Heel Hook + Game Over Position",
-  "Caveman Necktie from Back Mount",
+  "Ninja Choke",
+  "Toe Hold",
+  "Triangle + Arm Bar",
+  "Inside Heel Hook (game over position)",
+  "Scorpion Lock",
   "Backside - Outside heel hook",
-  "K Guard + Arm Saddle + Tarikoplata",
-  "Reverse X + 411 + Heel Hook",
+  "Canto Choke variations",
+  "Reverse X- Guard + 411 + Heel Hook",
   "Z lock",
   "Clover Leaf",
   "50/50 + Arm Bar",
-  "Octopus GUARD + Calf Slicer",
-  "Bow & Arrow (Gi or Nogi)",
-  "Caveman Necktie from Front Head Lock",
-  "Kosovo Cradle",
-  "K Guard Triangle",
-  "Scythe Arm Bar",
-  "BOTTOM HALF GUARD + KNEE BAR (on opposite knee)",
-  "WAITER SWEEP + BACK + RNC",
-  "Deep Half + ROLL + Dog Bar",
-  "Octopus Guard (bottom) + Arm Bar",
+  "Calf Slicer",
+  "Aioki Lock",
+  "RNC + 1 Arm Trapped",
+  "Caio Terra lock",
+  "Arm Triangle",
+  "Straight Ankle Lock",
+  "BOTTOM HALF GUARD + KNEE BAR",
+  "DEEP HALF GUARD + WAITER SWEEP + BACK TAKE + RNC",
+  "DOG FIGHT + ROLLING KNEE BAR",
+  "Paper Cutter Choke",
   "Reverse DLR + Knee Bar",
   "Bicep Slicer",
-  "Buggy Choke from Back",
+  "Belly down ankle lock",
   "Bolo + Body lock + RNC",
-  "Dog Fight + Rolling Knee Bar",
-  "50/50 + Darce Choke",
-  "Wrist lock (top side control)",
-  "Lapel guard + Arm bar",
+  "Knee On Belly",
+  "Darce Choke",
+  "Wrist lock (top position side control)",
+  "Lapel guard + arm bar",
   "Baseball bat choke",
   "Closed Guard + Arm Bar (shot gun)",
-  "Nogi Baseball Bat Choke",
+  "Anaconda choke",
   "Flying Triangle",
-  "K Guard + Arm Bar",
+  "Arm Bar (dead orchard)",
   "Wrist lock (bottom position)",
-  "Butterfly guard + Arm bar",
+  "Butterfly guard + arm bar",
   "Choi Bar (complete w/ arm saddle)",
-  "Lasso Guard + Spinning Triangle",
+  "Flying Arm Bar",
   "Side control + step over arm bar",
-  "Flying Guillotine",
+  "Guillotine no arms",
   "Kimura Trap + Arm Bar",
-  "Double Arm Bar from Closed Guard",
-  "Squid guard + RNC",
+  "Americana + Arm Bar",
+  "SQUID guard + RNC",
   "Tarikoplata",
   "Baratoplata",
-  "Knee On Belly + Mothers Milk",
-  "Wheelchair Omoplata",
+  "Mothers Milk",
+  "Omoplata",
   "Gogoplata",
   "Triangle (no arm variation)",
   "Japanese necktie",
   "Peruvian neck tie",
   "Guillotine (Arm in)",
-  "Body Triangle + Ezekiel Choke",
-  "Octopus guard + back + rnc",
-  "Crucifix + wrist lock",
-  "Reverse Triangle",
-  "Squid Guard + Knee bar",
-  "K Guard + Knee Bar",
-  "Knee On Belly + Nearside Arm Bar",
+  "Lapel choke (using your lapel)",
+  "Brabo Choke",
+  "Knee On Belly + Arm Bar",
   "Banana Split",
   "Knee On Belly Far Side Arm Bar",
-  "Crucifix + Choke",
-  "5050 + Darce Choke",
-  "Dog Fight + Gator roll + Dog Bar",
-  "Buggy Choke from bottom",
+  "Crucifix Lapel Choke",
+  "Lapel set up (your lapel) + Arm bar",
+  "Knee bar from top 1/2 guard",
+  "Helicopter Choke",
   "Bow & Arrow",
-  "Buggy choke from back",
-  "Bicep Slicer from Top Side Control",
-  "Octopus Guard + Calf Slicer",
+  "Lapel set up (opponents lapel) + Arm bar",
+  "Lapel Choke (using opponents)",
+  "Crucifix Bicep Slicer",
   "Rolling Bow & Arrow",
-  "Lapel set up + Wristlock",
+  "Lapel set up (anybody's lapel) + Wristlock",
   "Crucifix Wrist Lock",
-  "Head & Arm Choke + Buggy Choke",
-  "5050 + Wristlock",
-  "Buggy Choke from Top Side",
+  "Canto Choke Variations",
+  "Lapel Choke (using your own)",
 ];
 
 export const DEFAULT_BJJ_CONFIG: BjjConfig = {
@@ -228,9 +225,31 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    // Boot: start looping immediately with defaults, then let server correct
-    startLoop();
-    syncWithServer();
+    // Boot: restore saved attack state from server, then start loop
+    (async () => {
+      try {
+        const res = await fetch(API_CURRENT, { cache: "no-cache" });
+        if (res.ok) {
+          const saved = await res.json();
+          if (saved?.attack) {
+            currentAttackRef.current = saved.attack;
+            setDisplayAttack(saved.attack);
+          }
+          if (saved?.isLooping === false) {
+            isLoopingRef.current = false;
+            setIsLooping(false);
+            const attack = saved.selectedAttackOnStop || saved.attack || "";
+            currentAttackRef.current = attack;
+            setDisplayAttack(attack);
+          }
+        }
+      } catch {
+        // ignore — fall through to default loop
+      }
+
+      if (isLoopingRef.current) startLoop();
+      syncWithServer();
+    })();
 
     const syncTimer = setInterval(syncWithServer, SYNC_INTERVAL);
 

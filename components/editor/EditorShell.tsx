@@ -16,8 +16,8 @@ const TABS: { key: EditorTab; label: string }[] = [
   { key: "preview", label: "Export" },
 ];
 
-export function EditorShell() {
-  const { state, dispatch, undo, redo, canUndo, canRedo } = useEditor();
+export function EditorShell({ onBack }: { onBack?: () => void }) {
+  const { state, dispatch, undo, redo, canUndo, canRedo, save, isDirty, isSaving } = useEditor();
   const [mobileView, setMobileView] = useState<"editor" | "preview">("editor");
 
   const renderTab = () => {
@@ -36,7 +36,15 @@ export function EditorShell() {
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white overflow-hidden">
       {/* Mobile Toggle Bar */}
-      <div className="flex md:hidden border-b border-gray-700 shrink-0">
+      <div className="flex md:hidden border-b border-gray-700 shrink-0 items-center">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="px-3 py-2.5 text-xs text-gray-400 hover:text-white border-r border-gray-700 shrink-0"
+          >
+            ←
+          </button>
+        )}
         <button
           onClick={() => setMobileView("editor")}
           className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
@@ -68,6 +76,14 @@ export function EditorShell() {
       >
         {/* Top Bar */}
         <div className="flex items-center gap-2 p-3 border-b border-gray-700 shrink-0">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="hidden md:block px-3 py-1.5 bg-gray-800 border border-gray-600 rounded-lg text-xs text-gray-300 hover:text-white hover:bg-gray-700 transition-colors shrink-0"
+            >
+              ← Back
+            </button>
+          )}
           <input
             type="text"
             value={state.widget.name}
@@ -94,6 +110,19 @@ export function EditorShell() {
             title="Redo"
           >
             ↪
+          </button>
+          <button
+            onClick={save}
+            disabled={isSaving || !isDirty}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors shrink-0 ${
+              isSaving
+                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                : isDirty
+                ? "bg-blue-600 hover:bg-blue-500 text-white"
+                : "bg-gray-800 text-gray-500 cursor-default border border-gray-600"
+            }`}
+          >
+            {isSaving ? "Saving…" : isDirty ? "Save" : "Saved"}
           </button>
         </div>
 

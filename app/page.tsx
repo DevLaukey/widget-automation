@@ -18,31 +18,13 @@ export default function Home() {
   if (widgetType === "counter") {
     return (
       <EditorProvider>
-        <div className="relative">
-          <button
-            onClick={() => setWidgetType(null)}
-            className="absolute top-3 left-3 z-50 px-3 py-1.5 bg-gray-800 border border-gray-600 rounded-lg text-xs text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
-          >
-            ← Widgets
-          </button>
-          <EditorShell />
-        </div>
+        <EditorShell onBack={() => setWidgetType(null)} />
       </EditorProvider>
     );
   }
 
   if (widgetType === "bjj") {
-    return (
-      <div className="relative">
-        <button
-          onClick={() => setWidgetType(null)}
-          className="absolute top-3 left-3 z-50 px-3 py-1.5 bg-gray-800 border border-gray-600 rounded-lg text-xs text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
-        >
-          ← Widgets
-        </button>
-        <BjjEditorShell />
-      </div>
-    );
+    return <BjjEditorShell onBack={() => setWidgetType(null)} />;
   }
 
   // Landing — widget picker

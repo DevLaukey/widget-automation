@@ -87,8 +87,9 @@ body { background: transparent; }
 
 <script>
 (function () {
-  var API_STATUS = 'https://ugia-mmeab.ondigitalocean.app/api/aras25/status';
-  var API_TEXT   = 'https://ugia-mmeab.ondigitalocean.app/api/aras25/attack/text';
+  var API_STATUS    = 'https://ugia-mmeab.ondigitalocean.app/api/aras25/status';
+  var API_TEXT      = 'https://ugia-mmeab.ondigitalocean.app/api/aras25/attack/text';
+  var EVENT_END     = ${config.eventDateTime ? `new Date('${config.eventDateTime}')` : 'null'};
   var SYNC_INTERVAL = 3000;
   var LOOP_INTERVAL = 200;
 
@@ -96,6 +97,7 @@ body { background: transparent; }
 
   var localAttacks   = defaultAttacks.slice();
   var isLooping      = true;
+  var isEnded        = false;
   var currentAttack  = '';
   var loopTimer      = null;
   var isSyncing      = false;
@@ -104,14 +106,24 @@ body { background: transparent; }
   var logoWrap   = document.getElementById('bjj-logo-wrap');
   var attackEl   = document.getElementById('bjj-attack');
 
+  function endEvent() {
+    if (isEnded) return;
+    isEnded   = true;
+    isLooping = false;
+    stopLoop();
+    root.className     = 'bjj-widget mode-event';
+    logoWrap.className = '';          // no animation — static logo
+  }
+
   function setMode(loop) {
+    if (isEnded) return;
     isLooping = loop;
-    root.className  = 'bjj-widget ' + (loop ? 'mode-loop' : 'mode-event');
+    root.className     = 'bjj-widget ' + (loop ? 'mode-loop' : 'mode-event');
     logoWrap.className = loop ? 'bjj-logo-spark' : 'bjj-logo-rgb';
   }
 
   function startLoop() {
-    if (loopTimer) return;
+    if (loopTimer || isEnded) return;
     loopTimer = setInterval(function () {
       if (!localAttacks.length) return;
       var atk = localAttacks[Math.floor(Math.random() * localAttacks.length)];
@@ -150,6 +162,8 @@ body { background: transparent; }
         localAttacks = data.attacks;
       }
 
+      if (isEnded) { stopLoop(); return; }
+
       var shouldLoop = !!data.isLooping;
 
       if (shouldLoop !== isLooping) {
@@ -170,7 +184,15 @@ body { background: transparent; }
   }
 
   // Boot
-  startLoop();
+  if (EVENT_END && Date.now() >= EVENT_END.getTime()) {
+    endEvent();
+  } else {
+    startLoop();
+    if (EVENT_END) {
+      setTimeout(endEvent, EVENT_END.getTime() - Date.now());
+    }
+  }
+
   syncWithServer();
   setInterval(syncWithServer, SYNC_INTERVAL);
 
@@ -185,10 +207,11 @@ body { background: transparent; }
 
 // ─── Editor shell ─────────────────────────────────────────────────────────────
 
-export function BjjEditorShell() {
+export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
   const [config, setConfig] = useState<BjjConfig>(DEFAULT_BJJ_CONFIG);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<"config" | "export">("config");
+  const [mobileView, setMobileView] = useState<"editor" | "preview">("editor");
   const [origin, setOrigin] = useState("");
 
   useEffect(() => {
@@ -207,11 +230,56 @@ export function BjjEditorShell() {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white overflow-hidden">
+      {/* ── Mobile Toggle Bar ── */}
+      <div className="flex md:hidden border-b border-gray-700 shrink-0 items-center">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="px-3 py-2.5 text-xs text-gray-400 hover:text-white border-r border-gray-700 shrink-0"
+          >
+            ←
+          </button>
+        )}
+        <button
+          onClick={() => setMobileView("editor")}
+          className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
+            mobileView === "editor"
+              ? "text-blue-400 border-b-2 border-blue-400 bg-gray-800"
+              : "text-gray-400"
+          }`}
+        >
+          Editor
+        </button>
+        <button
+          onClick={() => setMobileView("preview")}
+          className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
+            mobileView === "preview"
+              ? "text-blue-400 border-b-2 border-blue-400 bg-gray-800"
+              : "text-gray-400"
+          }`}
+        >
+          Preview
+        </button>
+      </div>
+
       {/* ── Sidebar ── */}
-      <div className="w-full md:w-[400px] shrink-0 flex flex-col border-r border-gray-700 bg-gray-900">
+      <div
+        className={`w-full md:w-[400px] shrink-0 flex flex-col border-r border-gray-700 bg-gray-900 ${
+          mobileView === "editor" ? "flex" : "hidden md:flex"
+        }`}
+        style={{ minHeight: 0 }}
+      >
         {/* Header */}
         <div className="flex items-center gap-2 p-3 border-b border-gray-700 shrink-0">
-          <span className="flex-1 px-3 py-1.5 text-sm font-medium text-white">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="hidden md:block px-3 py-1.5 bg-gray-800 border border-gray-600 rounded-lg text-xs text-gray-300 hover:text-white hover:bg-gray-700 transition-colors shrink-0"
+            >
+              ← Back
+            </button>
+          )}
+          <span className="flex-1 px-3 py-1.5 text-sm font-medium text-white truncate">
             BJJ Submission Bonus Widget
           </span>
         </div>
@@ -283,6 +351,22 @@ export function BjjEditorShell() {
                 />
               </div>
 
+              {/* Event end date/time */}
+              <div>
+                <label className="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">
+                  Event End Date &amp; Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={config.eventDateTime}
+                  onChange={(e) => update({ eventDateTime: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 [color-scheme:dark]"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  When this time is reached the ARAS loop stops and all animations freeze. Leave blank for manual control.
+                </p>
+              </div>
+
               {/* Default attacks info */}
               <div className="rounded-lg bg-gray-800 border border-gray-700 p-3 text-xs text-gray-500">
                 <p className="text-gray-400 font-medium mb-1">
@@ -329,7 +413,7 @@ export function BjjEditorShell() {
       </div>
 
       {/* ── Live Preview ── */}
-      <div className="flex-1 min-w-0 min-h-0 flex flex-col bg-gray-950 overflow-auto">
+      <div className={`flex-1 min-w-0 min-h-0 flex-col bg-gray-950 overflow-auto ${mobileView === "preview" ? "flex" : "hidden md:flex"}`}>
         <div className="shrink-0 px-4 py-2 border-b border-gray-800 text-xs text-gray-500 uppercase tracking-widest">
           Live Preview — fetching from server
         </div>

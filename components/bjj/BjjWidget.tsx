@@ -7,6 +7,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 export interface BjjConfig {
   amount: string;
   eventLabel: string;
+  eventDateTime: string; // ISO / datetime-local string — empty means no end time
 }
 
 interface ServerState {
@@ -104,14 +105,16 @@ export const DEFAULT_BJJ_ATTACKS = [
 export const DEFAULT_BJJ_CONFIG: BjjConfig = {
   amount: "$5,000",
   eventLabel: "SUBMISSION BONUS — FIGHT NIGHT",
+  eventDateTime: "",
 };
 
 // ─── Widget ───────────────────────────────────────────────────────────────────
 
 export function BjjWidget({ config }: { config: BjjConfig }) {
-  const { amount, eventLabel } = config;
+  const { amount, eventLabel, eventDateTime } = config;
 
   const [isLooping, setIsLooping] = useState(true);
+  const [isEnded, setIsEnded] = useState(false);
   const [displayAttack, setDisplayAttack] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const [displayEventLabel, setDisplayEventLabel] = useState(eventLabel);
@@ -119,6 +122,7 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
   // Refs so interval callbacks always see fresh values
   const localAttacksRef = useRef<string[]>([...DEFAULT_BJJ_ATTACKS]);
   const isLoopingRef = useRef(true);
+  const isEndedRef = useRef(false);
   const currentAttackRef = useRef("");
   const loopRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isSyncingRef = useRef(false);
@@ -188,6 +192,12 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
         setDisplayEventLabel(data.currentEvent.name);
       }
 
+      // Don't change loop state once the event has ended
+      if (isEndedRef.current) {
+        stopLoop();
+        return;
+      }
+
       const shouldLoop = !!data.isLooping;
 
       if (shouldLoop !== isLoopingRef.current) {
@@ -225,6 +235,17 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
+    // Check if the event end time has already passed
+    const eventEnd = eventDateTime ? new Date(eventDateTime) : null;
+    const alreadyEnded = eventEnd ? Date.now() >= eventEnd.getTime() : false;
+
+    if (alreadyEnded) {
+      isEndedRef.current = true;
+      isLoopingRef.current = false;
+      setIsEnded(true);
+      setIsLooping(false);
+    }
+
     // Boot: restore saved attack state from server, then start loop
     (async () => {
       try {
@@ -247,11 +268,24 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
         // ignore — fall through to default loop
       }
 
-      if (isLoopingRef.current) startLoop();
+      if (isLoopingRef.current && !isEndedRef.current) startLoop();
       syncWithServer();
     })();
 
     const syncTimer = setInterval(syncWithServer, SYNC_INTERVAL);
+
+    // Schedule auto-stop when event end time arrives
+    let endTimer: ReturnType<typeof setTimeout> | null = null;
+    if (eventEnd && !alreadyEnded) {
+      const msUntilEnd = eventEnd.getTime() - Date.now();
+      endTimer = setTimeout(() => {
+        isEndedRef.current = true;
+        isLoopingRef.current = false;
+        setIsEnded(true);
+        setIsLooping(false);
+        stopLoop();
+      }, msUntilEnd);
+    }
 
     const handleVisibility = () => {
       if (document.visibilityState === "visible") syncWithServer();
@@ -261,9 +295,10 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
     return () => {
       stopLoop();
       clearInterval(syncTimer);
+      if (endTimer) clearTimeout(endTimer);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [startLoop, stopLoop, syncWithServer]);
+  }, [startLoop, stopLoop, syncWithServer, eventDateTime]);
 
   // ── Derived styles ────────────────────────────────────────────────────────────
 
@@ -313,7 +348,7 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
       />
 
       {/* Logo */}
-      <div className={isLooping ? "bjj-logo-spark" : "bjj-logo-rgb"}>
+      <div className={isEnded ? "" : isLooping ? "bjj-logo-spark" : "bjj-logo-rgb"}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/logo-widget.svg"

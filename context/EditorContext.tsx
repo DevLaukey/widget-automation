@@ -510,6 +510,20 @@ export function useEditor() {
   const undo = useCallback(() => dispatch({ type: "UNDO" }), [dispatch]);
   const redo = useCallback(() => dispatch({ type: "REDO" }), [dispatch]);
 
+  const save = useCallback(async () => {
+    dispatch({ type: "SAVE_START" });
+    try {
+      await fetch("/api/widget", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(state.widget),
+      });
+      dispatch({ type: "SAVE_SUCCESS" });
+    } catch {
+      dispatch({ type: "SAVE_ERROR", payload: "Failed to save" });
+    }
+  }, [dispatch, state.widget]);
+
   return {
     state,
     dispatch,
@@ -523,7 +537,10 @@ export function useEditor() {
     updateLayout,
     undo,
     redo,
+    save,
     canUndo: state.undoStack.length > 0,
     canRedo: state.redoStack.length > 0,
+    isDirty: state.isDirty,
+    isSaving: state.isSaving,
   };
 }

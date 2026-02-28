@@ -30,23 +30,23 @@ body {
    ============================================================ */
 
 @keyframes electricSpark {
-  0%   { transform: scale(1);    filter: drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 15px #FFD700); }
-  12%  { transform: scale(1.08); filter: drop-shadow(0 0 12px #C0C0C0) drop-shadow(0 0 25px #C0C0C0) drop-shadow(0 0 35px #FFD700); }
-  25%  { transform: scale(1.12); filter: drop-shadow(0 0 18px #FFD700) drop-shadow(0 0 30px #FFD700) drop-shadow(0 0 45px #FFFFFF); }
-  37%  { transform: scale(1.06); filter: drop-shadow(0 0 14px #C0C0C0) drop-shadow(0 0 28px #C0C0C0) drop-shadow(0 0 40px #FFD700); }
-  50%  { transform: scale(1.15); filter: drop-shadow(0 0 22px #FFFFFF) drop-shadow(0 0 35px #FFFFFF) drop-shadow(0 0 50px #FFD700); }
-  62%  { transform: scale(1.04); filter: drop-shadow(0 0 16px #FFD700) drop-shadow(0 0 32px #FFD700) drop-shadow(0 0 42px #C0C0C0); }
-  75%  { transform: scale(1.10); filter: drop-shadow(0 0 20px #C0C0C0) drop-shadow(0 0 38px #C0C0C0) drop-shadow(0 0 55px #FFFFFF); }
-  87%  { transform: scale(1.02); filter: drop-shadow(0 0 10px #FFD700) drop-shadow(0 0 20px #FFD700) drop-shadow(0 0 30px #C0C0C0); }
-  100% { transform: scale(1);    filter: drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 15px #FFD700); }
+  0%   { transform: scale(1);    filter: drop-shadow(0 0 8px #ff69b4) drop-shadow(0 0 15px #ff1493); }
+  12%  { transform: scale(1.08); filter: drop-shadow(0 0 12px #da70d6) drop-shadow(0 0 25px #da70d6) drop-shadow(0 0 35px #ff69b4); }
+  25%  { transform: scale(1.12); filter: drop-shadow(0 0 18px #ff69b4) drop-shadow(0 0 30px #ff69b4) drop-shadow(0 0 45px #ffe0f0); }
+  37%  { transform: scale(1.06); filter: drop-shadow(0 0 14px #da70d6) drop-shadow(0 0 28px #da70d6) drop-shadow(0 0 40px #ff69b4); }
+  50%  { transform: scale(1.15); filter: drop-shadow(0 0 22px #ffe0f0) drop-shadow(0 0 35px #ffb6c1) drop-shadow(0 0 50px #ff69b4); }
+  62%  { transform: scale(1.04); filter: drop-shadow(0 0 16px #ff69b4) drop-shadow(0 0 32px #ff1493) drop-shadow(0 0 42px #da70d6); }
+  75%  { transform: scale(1.10); filter: drop-shadow(0 0 20px #da70d6) drop-shadow(0 0 38px #da70d6) drop-shadow(0 0 55px #ffb6c1); }
+  87%  { transform: scale(1.02); filter: drop-shadow(0 0 10px #ff69b4) drop-shadow(0 0 20px #ff1493) drop-shadow(0 0 30px #da70d6); }
+  100% { transform: scale(1);    filter: drop-shadow(0 0 8px #ff69b4) drop-shadow(0 0 15px #ff1493); }
 }
 
 @keyframes brainThrobIntense {
-  0%   { transform: scale(1);    filter: drop-shadow(0 0 15px #ff0066) drop-shadow(0 0 30px #ff0066); }
-  25%  { transform: scale(1.12); filter: drop-shadow(0 0 25px #66ff00) drop-shadow(0 0 50px #66ff00); }
-  50%  { transform: scale(1.18); filter: drop-shadow(0 0 35px #0099ff) drop-shadow(0 0 70px #0099ff); }
-  75%  { transform: scale(1.12); filter: drop-shadow(0 0 25px #0099ff) drop-shadow(0 0 50px #0099ff); }
-  100% { transform: scale(1);    filter: drop-shadow(0 0 15px #ff0066) drop-shadow(0 0 30px #ff0066); }
+  0%   { transform: scale(1);    filter: drop-shadow(0 0 15px #ff1493) drop-shadow(0 0 30px #ff69b4); }
+  25%  { transform: scale(1.12); filter: drop-shadow(0 0 25px #ff69b4) drop-shadow(0 0 50px #da70d6) drop-shadow(0 0 70px #ffb6c1); }
+  50%  { transform: scale(1.18); filter: drop-shadow(0 0 35px #ff1493) drop-shadow(0 0 70px #ff69b4) drop-shadow(0 0 90px #ffe0f0); }
+  75%  { transform: scale(1.12); filter: drop-shadow(0 0 25px #da70d6) drop-shadow(0 0 50px #ff1493); }
+  100% { transform: scale(1);    filter: drop-shadow(0 0 15px #ff1493) drop-shadow(0 0 30px #ff69b4); }
 }
 
 .bjj-logo-spark {

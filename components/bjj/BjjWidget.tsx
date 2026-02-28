@@ -8,6 +8,7 @@ export interface BjjConfig {
   amount: string;
   eventLabel: string;
   eventDateTime: string; // ISO / datetime-local string — empty means no end time
+  attacks?: string[];    // custom attacks list; falls back to DEFAULT_BJJ_ATTACKS
 }
 
 interface ServerState {
@@ -106,6 +107,7 @@ export const DEFAULT_BJJ_CONFIG: BjjConfig = {
   amount: "$5,000",
   eventLabel: "SUBMISSION BONUS — FIGHT NIGHT",
   eventDateTime: "",
+  attacks: [...DEFAULT_BJJ_ATTACKS],
 };
 
 // ─── Widget ───────────────────────────────────────────────────────────────────
@@ -120,12 +122,20 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
   const [displayEventLabel, setDisplayEventLabel] = useState(eventLabel);
 
   // Refs so interval callbacks always see fresh values
-  const localAttacksRef = useRef<string[]>([...DEFAULT_BJJ_ATTACKS]);
+  const localAttacksRef = useRef<string[]>(
+    config.attacks?.length ? [...config.attacks] : [...DEFAULT_BJJ_ATTACKS]
+  );
   const isLoopingRef = useRef(true);
   const isEndedRef = useRef(false);
   const currentAttackRef = useRef("");
   const loopRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isSyncingRef = useRef(false);
+
+  // Sync attacks list whenever config.attacks changes
+  useEffect(() => {
+    const list = config.attacks?.length ? config.attacks : DEFAULT_BJJ_ATTACKS;
+    localAttacksRef.current = [...list];
+  }, [config.attacks]);
 
   // ── Loop control ────────────────────────────────────────────────────────────
 
@@ -302,13 +312,13 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
 
   // ── Derived styles ────────────────────────────────────────────────────────────
 
-  const attackColor = isLooping ? "rgb(46,164,255)" : "rgb(244,176,245)";
+  const attackColor = isLooping ? "rgb(255,105,180)" : "rgb(244,176,245)";
   const attackGlow = isLooping
-    ? "0 0 15px rgba(0,255,255,0.8), 0 0 30px rgba(255,0,255,0.6)"
-    : "0 0 20px rgba(0,153,255,0.9), 0 0 40px rgba(255,0,102,0.7)";
-  const labelColor = isLooping ? "#a0cfff" : "#e8c8f8";
+    ? "0 0 15px rgba(255,20,147,0.8), 0 0 30px rgba(218,112,214,0.6)"
+    : "0 0 20px rgba(255,20,147,0.9), 0 0 40px rgba(255,105,180,0.7)";
+  const labelColor = isLooping ? "#f9b8d8" : "#e8c8f8";
   const labelGlow = isLooping
-    ? "0 0 8px rgba(46,164,255,0.3)"
+    ? "0 0 8px rgba(255,105,180,0.4)"
     : "0 0 8px rgba(244,176,245,0.3)";
 
   // ── Render ────────────────────────────────────────────────────────────────────

@@ -137,6 +137,11 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
     localAttacksRef.current = [...list];
   }, [config.attacks]);
 
+  // Sync event label from config prop (editor live preview)
+  useEffect(() => {
+    setDisplayEventLabel(eventLabel);
+  }, [eventLabel]);
+
   // ── Loop control ────────────────────────────────────────────────────────────
 
   const startLoop = useCallback(() => {
@@ -245,6 +250,12 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
+    // Reset ended state whenever eventDateTime changes (e.g. event removed)
+    isEndedRef.current = false;
+    isLoopingRef.current = true;
+    setIsEnded(false);
+    setIsLooping(true);
+
     // Check if the event end time has already passed
     const eventEnd = eventDateTime ? new Date(eventDateTime) : null;
     const alreadyEnded = eventEnd ? Date.now() >= eventEnd.getTime() : false;

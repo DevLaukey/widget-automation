@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
 export async function POST(request: NextRequest) {
@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
   const filename = `${Date.now()}-${safeName}`;
 
   const imagesDir = path.join(process.cwd(), "public", "images");
+  await mkdir(imagesDir, { recursive: true });
   const filePath = path.join(imagesDir, filename);
 
   await writeFile(filePath, buffer);

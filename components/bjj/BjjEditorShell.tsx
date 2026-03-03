@@ -279,21 +279,56 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
   const [copied, setCopied]           = useState(false);
   const [toast, setToast]             = useState("");
 
-  // ── Load from localStorage ────────────────────────────────────────────────
+  // ── Load from file (API), fallback to localStorage ───────────────────────
 
   useEffect(() => {
     setOrigin(window.location.origin);
-    try {
-      const storedConfig = localStorage.getItem(KEY_CONFIG);
-      if (storedConfig) {
-        const parsed: BjjConfig = JSON.parse(storedConfig);
-        setConfig({
-          ...parsed,
-          attacks: parsed.attacks?.length ? parsed.attacks : [...DEFAULT_BJJ_ATTACKS],
-        });
-      }
-      setSavedEvents(loadStoredEvents());
-    } catch {}
+    fetch("/api/bjj")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data) {
+          if (data.config) {
+            const parsed: BjjConfig = data.config;
+            setConfig({
+              ...parsed,
+              attacks: parsed.attacks?.length ? parsed.attacks : [...DEFAULT_BJJ_ATTACKS],
+            });
+          }
+          if (Array.isArray(data.events)) {
+            const active = data.events.filter(
+              (e: SavedEvent) => new Date(e.expiresAt).getTime() > Date.now()
+            );
+            setSavedEvents(active);
+          }
+        } else {
+          // Fallback: load from localStorage if no file data
+          try {
+            const storedConfig = localStorage.getItem(KEY_CONFIG);
+            if (storedConfig) {
+              const parsed: BjjConfig = JSON.parse(storedConfig);
+              setConfig({
+                ...parsed,
+                attacks: parsed.attacks?.length ? parsed.attacks : [...DEFAULT_BJJ_ATTACKS],
+              });
+            }
+            setSavedEvents(loadStoredEvents());
+          } catch {}
+        }
+      })
+      .catch(() => {
+        // Fallback: load from localStorage on network error
+        try {
+          const storedConfig = localStorage.getItem(KEY_CONFIG);
+          if (storedConfig) {
+            const parsed: BjjConfig = JSON.parse(storedConfig);
+            setConfig({
+              ...parsed,
+              attacks: parsed.attacks?.length ? parsed.attacks : [...DEFAULT_BJJ_ATTACKS],
+            });
+          }
+          setSavedEvents(loadStoredEvents());
+        } catch {}
+      });
   }, []);
 
   // ── Helpers ──────────────────────────────────────────────────────────────
@@ -306,10 +341,25 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
     setTimeout(() => setToast(""), 2200);
   }
 
+  // ── Save to file helper ───────────────────────────────────────────────────
+
+  function saveToFile(updatedConfig: BjjConfig, updatedEvents: SavedEvent[]) {
+    fetch("/api/bjj", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ config: updatedConfig, events: updatedEvents }),
+    }).catch(() => {
+      // Silent fail — localStorage still has the data
+    });
+    // Also keep localStorage in sync as a fallback
+    localStorage.setItem(KEY_CONFIG, JSON.stringify(updatedConfig));
+    persistEvents(updatedEvents);
+  }
+
   // ── Config save ──────────────────────────────────────────────────────────
 
   function saveConfig() {
-    localStorage.setItem(KEY_CONFIG, JSON.stringify(config));
+    saveToFile(config, savedEvents);
     showToast("Config saved!");
   }
 
@@ -331,8 +381,7 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
   }
 
   function saveAttacks() {
-    const updated = { ...config };
-    localStorage.setItem(KEY_CONFIG, JSON.stringify(updated));
+    saveToFile(config, savedEvents);
     showToast(`Attacks saved! (${config.attacks?.length ?? 0} moves)`);
   }
 
@@ -351,7 +400,7 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
     };
     const updated = [...loadStoredEvents(), evt];
     setSavedEvents(updated);
-    persistEvents(updated);
+    saveToFile(config, updated);
     showToast(`Event "${config.eventLabel}" saved — expires 11 PM`);
   }
 
@@ -369,7 +418,7 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
   function deleteEvent(id: string) {
     const updated = savedEvents.filter((e) => e.id !== id);
     setSavedEvents(updated);
-    persistEvents(updated);
+    saveToFile(config, updated);
   }
 
   // ── Export ────────────────────────────────────────────────────────────────

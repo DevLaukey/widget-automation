@@ -513,11 +513,12 @@ export function useEditor() {
   const save = useCallback(async () => {
     dispatch({ type: "SAVE_START" });
     try {
-      await fetch("/api/widget", {
+      const res = await fetch("/api/widget", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(state.widget),
       });
+      if (!res.ok) throw new Error("Server error");
       dispatch({ type: "SAVE_SUCCESS" });
     } catch {
       dispatch({ type: "SAVE_ERROR", payload: "Failed to save" });

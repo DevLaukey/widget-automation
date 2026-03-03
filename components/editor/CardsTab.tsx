@@ -455,11 +455,11 @@ function ImageUpload({
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: formData });
-      if (!res.ok) throw new Error("Upload failed");
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
       onChange(data.url);
-    } catch {
-      setError("Failed to upload image");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload image");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";

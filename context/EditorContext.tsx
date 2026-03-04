@@ -17,6 +17,48 @@ import type {
 import type { EditorState, EditorAction } from "@/types/editor";
 
 // =============================================================================
+// localStorage icon helpers — keeps base64 out of the server JSON
+// =============================================================================
+
+const ICONS_KEY = "widget_icons";
+const LOCAL_CONFIG_KEY = "widget_config";
+
+function saveIcons(cards: CardData[]) {
+  try {
+    const stored: Record<string, string> = loadIcons();
+    for (const card of cards) {
+      if (card.icon?.startsWith("data:")) stored[card.id] = card.icon;
+      else if (!card.icon) delete stored[card.id];
+    }
+    localStorage.setItem(ICONS_KEY, JSON.stringify(stored));
+  } catch {}
+}
+
+function loadIcons(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(ICONS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function stripIcons(widget: WidgetConfig): WidgetConfig {
+  return {
+    ...widget,
+    cards: widget.cards.map((c) => ({ ...c, icon: c.icon?.startsWith("data:") ? undefined : c.icon })),
+  };
+}
+
+function restoreIcons(widget: WidgetConfig): WidgetConfig {
+  const icons = loadIcons();
+  return {
+    ...widget,
+    cards: widget.cards.map((c) => ({ ...c, icon: icons[c.id] ?? c.icon })),
+  };
+}
+
+// =============================================================================
 // Default Widget with sample cards
 // =============================================================================
 
@@ -380,14 +422,27 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
   // Load saved widget data from local file on mount, then auto-fetch API values
   useEffect(() => {
+    function loadLocalConfig() {
+      try {
+        const raw = localStorage.getItem(LOCAL_CONFIG_KEY);
+        if (raw) {
+          const parsed: WidgetConfig = JSON.parse(raw);
+          dispatch({ type: "SET_WIDGET", payload: restoreIcons(parsed) });
+          return parsed;
+        }
+      } catch {}
+      return null;
+    }
+
     fetch("/api/widget")
       .then((res) => res.json())
       .then((data) => {
         if (data && data.id) {
-          dispatch({ type: "SET_WIDGET", payload: data });
-          return data;
+          const widget = restoreIcons(data);
+          dispatch({ type: "SET_WIDGET", payload: widget });
+          return widget;
         }
-        return null;
+        return loadLocalConfig();
       })
       .then((widget) => {
         const apiUrl = widget?.apiUrl || state.widget.apiUrl;
@@ -412,7 +467,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           });
       })
       .catch(() => {
-        // No saved data or API fetch failed, use defaults
+        loadLocalConfig();
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -421,13 +476,15 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!state.isDirty) return;
     const timeout = setTimeout(() => {
+      // Always persist to localStorage (works on Vercel too)
+      saveIcons(state.widget.cards);
+      try { localStorage.setItem(LOCAL_CONFIG_KEY, JSON.stringify(state.widget)); } catch {}
+      // Also try server (no-op if filesystem is read-only)
       fetch("/api/widget", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(state.widget),
-      }).catch(() => {
-        // Silent fail on auto-save
-      });
+        body: JSON.stringify(stripIcons(state.widget)),
+      }).catch(() => {});
     }, 1000);
     return () => clearTimeout(timeout);
   }, [state.widget, state.isDirty]);
@@ -513,12 +570,15 @@ export function useEditor() {
   const save = useCallback(async () => {
     dispatch({ type: "SAVE_START" });
     try {
-      const res = await fetch("/api/widget", {
+      // Always persist icons + full config to localStorage
+      saveIcons(state.widget.cards);
+      try { localStorage.setItem(LOCAL_CONFIG_KEY, JSON.stringify(state.widget)); } catch {}
+      // Try server (stripped of base64 icons)
+      await fetch("/api/widget", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(state.widget),
+        body: JSON.stringify(stripIcons(state.widget)),
       });
-      if (!res.ok) throw new Error("Server error");
       dispatch({ type: "SAVE_SUCCESS" });
     } catch {
       dispatch({ type: "SAVE_ERROR", payload: "Failed to save" });

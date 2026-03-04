@@ -452,14 +452,15 @@ function ImageUpload({
     setUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Upload failed");
-      onChange(data.url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to upload image");
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.readAsDataURL(file);
+      });
+      onChange(dataUrl);
+    } catch {
+      setError("Failed to read image");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";

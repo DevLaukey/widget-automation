@@ -1,1 +1,101 @@
-null
+{
+  "id": "widget-1",
+  "name": "My Counter Widget",
+  "cards": [
+    {
+      "id": "card-1",
+      "label": "",
+      "title": "Total Revenue",
+      "description": "",
+      "animation": {
+        "startValue": 0,
+        "endValue": 54000,
+        "duration": 2000,
+        "easing": "easeOut",
+        "decimalPlaces": 0,
+        "prefix": "$",
+        "suffix": "",
+        "triggerOnScroll": false,
+        "threshold": 0.3
+      }
+    },
+    {
+      "id": "card-2",
+      "label": "",
+      "title": "Active Users",
+      "description": "",
+      "animation": {
+        "startValue": 0,
+        "endValue": 12500,
+        "duration": 2000,
+        "easing": "easeOut",
+        "decimalPlaces": 0,
+        "prefix": "",
+        "suffix": "+",
+        "triggerOnScroll": false,
+        "threshold": 0.3
+      }
+    },
+    {
+      "id": "card-3",
+      "label": "",
+      "title": "Growth Rate",
+      "description": "",
+      "animation": {
+        "startValue": 0,
+        "endValue": 127,
+        "duration": 2000,
+        "easing": "easeOut",
+        "decimalPlaces": 1,
+        "prefix": "",
+        "suffix": "%",
+        "triggerOnScroll": false,
+        "threshold": 0.3
+      }
+    }
+  ],
+  "styles": {
+    "colors": {
+      "primary": "#0080FF",
+      "secondary": "#000000",
+      "background": "transparent",
+      "text": "#ffffff",
+      "label": "#ffffff",
+      "positive": "#00FF00",
+      "negative": "#6b7280",
+      "neutral": "#ffffff"
+    },
+    "fonts": {
+      "family": "'Orbitron', sans-serif",
+      "valueFontSize": "110px",
+      "labelFontSize": "1.5rem",
+      "titleFontSize": "28px",
+      "descriptionFontSize": "0.875rem",
+      "valueWeight": 700,
+      "labelWeight": 700,
+      "titleWeight": 600
+    },
+    "borderRadius": 0,
+    "boxShadow": "none",
+    "padding": "2.5rem",
+    "gap": "1.5rem",
+    "cardMinHeight": "200px",
+    "overlay": {
+      "enabled": false,
+      "color": "#000000",
+      "opacity": 0.5
+    }
+  },
+  "layout": {
+    "columns": {
+      "desktop": 3,
+      "tablet": 2,
+      "mobile": 1
+    },
+    "maxWidth": "100%",
+    "containerPadding": "2rem"
+  },
+  "apiUrl": "https://ugia-mmeab.ondigitalocean.app/api/groups/b13bd078",
+  "createdAt": "2026-03-04T06:44:41.888Z",
+  "updatedAt": "2026-03-04T06:45:31.184Z"
+}

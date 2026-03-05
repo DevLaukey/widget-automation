@@ -101,17 +101,15 @@ export function CounterCard({ card, styles, className = "" }: CounterCardProps) 
           )}
 
           {/* Logo - sized to match blue text block */}
-          {card.icon && (
-            <div className="counter-card__logo">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={card.icon}
-                alt=""
-                className="counter-card__logo-img"
-                style={{ objectFit: "contain" }}
-              />
-            </div>
-          )}
+          <div className="counter-card__logo">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/KUMITE_White.png"
+              alt=""
+              className="counter-card__logo-img"
+              style={{ objectFit: "contain" }}
+            />
+          </div>
 
           {/* 2. Animated Value / Prize Amount - bold italic green */}
           <p

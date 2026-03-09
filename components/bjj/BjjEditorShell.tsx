@@ -587,17 +587,7 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
                 >
                   Save Config
                 </button>
-                <button
-                  onClick={saveAsEvent}
-                  className="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-purple-700 hover:bg-purple-600 text-white transition-colors"
-                >
-                  Save as Event
-                </button>
               </div>
-
-              <p className="text-xs text-gray-500">
-                "Save as Event" stores a snapshot that auto-expires at 11 PM on the event date. Find saved events in the Events tab.
-              </p>
             </>
           )}
 
@@ -675,9 +665,6 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
               {activeEvents.length === 0 ? (
                 <div className="rounded-lg bg-gray-800 border border-gray-700 p-4 text-center">
                   <p className="text-xs text-gray-500">No active events.</p>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Go to Configure → Save as Event to create one.
-                  </p>
                 </div>
               ) : (
                 <div className="space-y-3">

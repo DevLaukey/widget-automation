@@ -22,8 +22,9 @@ interface SavedEvent {
 
 // ─── Storage helpers ──────────────────────────────────────────────────────────
 
-const KEY_EVENTS = "bjj_saved_events";
-const KEY_CONFIG  = "bjj_config";
+const KEY_EVENTS   = "bjj_saved_events";
+const KEY_CONFIG   = "bjj_config";
+const KEY_SAVED_AT = "bjj_saved_at";
 
 function expiryAt(eventDateTime: string): string {
   const base = eventDateTime ? new Date(eventDateTime) : new Date();
@@ -289,51 +290,49 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
 
   useEffect(() => {
     setOrigin(window.location.origin);
+
+    function getLocal(): { config: BjjConfig | null; events: SavedEvent[]; savedAt: number } {
+      try {
+        const raw = localStorage.getItem(KEY_CONFIG);
+        const config = raw ? JSON.parse(raw) as BjjConfig : null;
+        const savedAt = localStorage.getItem(KEY_SAVED_AT);
+        return { config, events: loadStoredEvents(), savedAt: savedAt ? new Date(savedAt).getTime() : 0 };
+      } catch {
+        return { config: null, events: [], savedAt: 0 };
+      }
+    }
+
+    function applyConfig(parsed: BjjConfig) {
+      setConfig({ ...parsed, attacks: parsed.attacks?.length ? parsed.attacks : [...DEFAULT_BJJ_ATTACKS] });
+    }
+
     fetch("/api/bjj")
       .then((res) => res.json())
       .then((data) => {
+        const local = getLocal();
+        const serverTime = data?._savedAt ? new Date(data._savedAt).getTime() : 0;
+
+        // Use whichever was saved more recently
+        if (local.savedAt > serverTime) {
+          if (local.config) applyConfig(local.config);
+          setSavedEvents(local.events);
+          return;
+        }
+
         if (data) {
-          if (data.config) {
-            const parsed: BjjConfig = data.config;
-            setConfig({
-              ...parsed,
-              attacks: parsed.attacks?.length ? parsed.attacks : [...DEFAULT_BJJ_ATTACKS],
-            });
-          }
+          if (data.config) applyConfig(data.config);
           if (Array.isArray(data.events)) {
-            const active = data.events.filter(
-              (e: SavedEvent) => new Date(e.expiresAt).getTime() > Date.now()
-            );
-            setSavedEvents(active);
+            setSavedEvents(data.events.filter((e: SavedEvent) => new Date(e.expiresAt).getTime() > Date.now()));
           }
         } else {
-          // Fallback: load from localStorage if no file data
-          try {
-            const storedConfig = localStorage.getItem(KEY_CONFIG);
-            if (storedConfig) {
-              const parsed: BjjConfig = JSON.parse(storedConfig);
-              setConfig({
-                ...parsed,
-                attacks: parsed.attacks?.length ? parsed.attacks : [...DEFAULT_BJJ_ATTACKS],
-              });
-            }
-            setSavedEvents(loadStoredEvents());
-          } catch {}
+          if (local.config) applyConfig(local.config);
+          setSavedEvents(local.events);
         }
       })
       .catch(() => {
-        // Fallback: load from localStorage on network error
-        try {
-          const storedConfig = localStorage.getItem(KEY_CONFIG);
-          if (storedConfig) {
-            const parsed: BjjConfig = JSON.parse(storedConfig);
-            setConfig({
-              ...parsed,
-              attacks: parsed.attacks?.length ? parsed.attacks : [...DEFAULT_BJJ_ATTACKS],
-            });
-          }
-          setSavedEvents(loadStoredEvents());
-        } catch {}
+        const local = getLocal();
+        if (local.config) applyConfig(local.config);
+        setSavedEvents(local.events);
       });
   }, []);
 
@@ -359,6 +358,7 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
     });
     // Also keep localStorage in sync as a fallback
     localStorage.setItem(KEY_CONFIG, JSON.stringify(updatedConfig));
+    localStorage.setItem(KEY_SAVED_AT, new Date().toISOString());
     persistEvents(updatedEvents);
   }
 

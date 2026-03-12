@@ -445,8 +445,9 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         })();
 
         if (data && data.id) {
-          // Prefer localStorage if it has a more recent updatedAt
-          const serverTime = data.updatedAt ? new Date(data.updatedAt).getTime() : 0;
+          // _savedAt is written by the DB on every POST — use it as the authoritative timestamp
+          const serverTime = data._savedAt ? new Date(data._savedAt).getTime()
+            : data.updatedAt ? new Date(data.updatedAt).getTime() : 0;
           const localTime = localWidget?.updatedAt ? new Date(localWidget.updatedAt).getTime() : 0;
           const widget = localTime > serverTime ? restoreIcons(localWidget!) : restoreIcons(data);
           dispatch({ type: "SET_WIDGET", payload: widget });

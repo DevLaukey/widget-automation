@@ -1,23 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile, writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { dbGet, dbSet, dbUpdatedAt } from "@/lib/db";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DATA_FILE = path.join(DATA_DIR, "widgets.json");
-
-async function ensureDataDir() {
-  try {
-    await mkdir(DATA_DIR, { recursive: true });
-  } catch {
-    // directory already exists
-  }
-}
+const KEY = "widget";
 
 export async function GET() {
   try {
-    await ensureDataDir();
-    const data = await readFile(DATA_FILE, "utf-8");
-    return NextResponse.json(JSON.parse(data));
+    const data = dbGet(KEY);
+    if (!data) return NextResponse.json(null);
+    return NextResponse.json({ ...data as object, _savedAt: dbUpdatedAt(KEY) });
   } catch {
     return NextResponse.json(null);
   }
@@ -25,14 +15,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    await ensureDataDir();
     const widget = await request.json();
-    await writeFile(DATA_FILE, JSON.stringify(widget, null, 2), "utf-8");
+    dbSet(KEY, widget);
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to save widget data" },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json({ error: "Failed to save widget" }, { status: 500 });
   }
 }

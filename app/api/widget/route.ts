@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { dbGet, dbSet, dbUpdatedAt } from "@/lib/db";
+import { dbGet, dbSetWithTimestamp, dbUpdatedAt } from "@/lib/db";
 
 const KEY = "widget";
 
 export async function GET() {
   try {
-    const data = dbGet(KEY);
+    const data = await dbGet(KEY);
     if (!data) return NextResponse.json(null);
-    return NextResponse.json({ ...data as object, _savedAt: dbUpdatedAt(KEY) });
+    const savedAt = await dbUpdatedAt(KEY);
+    return NextResponse.json({ ...data as object, _savedAt: savedAt });
   } catch {
     return NextResponse.json(null);
   }
@@ -16,7 +17,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const widget = await request.json();
-    dbSet(KEY, widget);
+    await dbSetWithTimestamp(KEY, widget);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Failed to save widget" }, { status: 500 });

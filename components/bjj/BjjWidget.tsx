@@ -109,7 +109,7 @@ export const DEFAULT_BJJ_ATTACKS = [
 ];
 
 export const DEFAULT_BJJ_CONFIG: BjjConfig = {
-  amount: "$5,000",
+  amount: "",
   eventLabel: "SUBMISSION BONUS — FIGHT NIGHT",
   eventDateTime: "",
   attacks: [...DEFAULT_BJJ_ATTACKS],

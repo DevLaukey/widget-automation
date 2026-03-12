@@ -286,53 +286,36 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
   const [eventForm, setEventForm] = useState({ name: "", date: "", amount: "" });
   const [formErrors, setFormErrors] = useState<{ name?: string; date?: string }>({});
 
-  // ── Load from file (API), fallback to localStorage ───────────────────────
+  // ── Load from DB only — localStorage is write-behind cache, never the source ──
 
   useEffect(() => {
     setOrigin(window.location.origin);
 
-    function getLocal(): { config: BjjConfig | null; events: SavedEvent[]; savedAt: number } {
-      try {
-        const raw = localStorage.getItem(KEY_CONFIG);
-        const config = raw ? JSON.parse(raw) as BjjConfig : null;
-        const savedAt = localStorage.getItem(KEY_SAVED_AT);
-        return { config, events: loadStoredEvents(), savedAt: savedAt ? new Date(savedAt).getTime() : 0 };
-      } catch {
-        return { config: null, events: [], savedAt: 0 };
-      }
-    }
-
-    function applyConfig(parsed: BjjConfig) {
-      setConfig({ ...parsed, attacks: parsed.attacks?.length ? parsed.attacks : [...DEFAULT_BJJ_ATTACKS] });
-    }
-
     fetch("/api/bjj")
       .then((res) => res.json())
       .then((data) => {
-        const local = getLocal();
-        const serverTime = data?._savedAt ? new Date(data._savedAt).getTime() : 0;
-
-        // Use whichever was saved more recently
-        if (local.savedAt > serverTime) {
-          if (local.config) applyConfig(local.config);
-          setSavedEvents(local.events);
+        if (!data || !data.config) {
+          // DB is empty — stay on code defaults, wipe stale localStorage
+          localStorage.removeItem(KEY_CONFIG);
+          localStorage.removeItem(KEY_SAVED_AT);
           return;
         }
-
-        if (data) {
-          if (data.config) applyConfig(data.config);
-          if (Array.isArray(data.events)) {
-            setSavedEvents(data.events.filter((e: SavedEvent) => new Date(e.expiresAt).getTime() > Date.now()));
-          }
-        } else {
-          if (local.config) applyConfig(local.config);
-          setSavedEvents(local.events);
+        const parsed: BjjConfig = data.config;
+        setConfig({ ...parsed, attacks: parsed.attacks?.length ? parsed.attacks : [...DEFAULT_BJJ_ATTACKS] });
+        if (Array.isArray(data.events)) {
+          setSavedEvents(data.events.filter((e: SavedEvent) => new Date(e.expiresAt).getTime() > Date.now()));
         }
       })
       .catch(() => {
-        const local = getLocal();
-        if (local.config) applyConfig(local.config);
-        setSavedEvents(local.events);
+        // Network down — fall back to localStorage cache
+        try {
+          const raw = localStorage.getItem(KEY_CONFIG);
+          if (raw) {
+            const parsed: BjjConfig = JSON.parse(raw);
+            setConfig({ ...parsed, attacks: parsed.attacks?.length ? parsed.attacks : [...DEFAULT_BJJ_ATTACKS] });
+          }
+          setSavedEvents(loadStoredEvents());
+        } catch {}
       });
   }, []);
 

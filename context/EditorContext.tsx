@@ -422,38 +422,16 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
   // Load saved widget data from local file on mount, then auto-fetch API values
   useEffect(() => {
-    function loadLocalConfig() {
-      try {
-        const raw = localStorage.getItem(LOCAL_CONFIG_KEY);
-        if (raw) {
-          const parsed: WidgetConfig = JSON.parse(raw);
-          dispatch({ type: "SET_WIDGET", payload: restoreIcons(parsed) });
-          return parsed;
-        }
-      } catch {}
-      return null;
-    }
-
     fetch("/api/widget")
       .then((res) => res.json())
       .then((data) => {
-        const localWidget = (() => {
-          try {
-            const raw = localStorage.getItem(LOCAL_CONFIG_KEY);
-            return raw ? (JSON.parse(raw) as WidgetConfig) : null;
-          } catch { return null; }
-        })();
-
         if (data && data.id) {
-          // _savedAt is written by the DB on every POST — use it as the authoritative timestamp
-          const serverTime = data._savedAt ? new Date(data._savedAt).getTime()
-            : data.updatedAt ? new Date(data.updatedAt).getTime() : 0;
-          const localTime = localWidget?.updatedAt ? new Date(localWidget.updatedAt).getTime() : 0;
-          const widget = localTime > serverTime ? restoreIcons(localWidget!) : restoreIcons(data);
-          dispatch({ type: "SET_WIDGET", payload: widget });
-          return widget;
+          dispatch({ type: "SET_WIDGET", payload: restoreIcons(data) });
+          return data as WidgetConfig;
         }
-        return loadLocalConfig();
+        // DB empty — wipe stale localStorage and stay on code defaults
+        localStorage.removeItem(LOCAL_CONFIG_KEY);
+        return null;
       })
       .then((widget) => {
         const apiUrl = widget?.apiUrl || state.widget.apiUrl;
@@ -478,7 +456,14 @@ export function EditorProvider({ children }: { children: ReactNode }) {
           });
       })
       .catch(() => {
-        loadLocalConfig();
+        // Network down — fall back to localStorage cache
+        try {
+          const raw = localStorage.getItem(LOCAL_CONFIG_KEY);
+          if (raw) {
+            const parsed: WidgetConfig = JSON.parse(raw);
+            dispatch({ type: "SET_WIDGET", payload: restoreIcons(parsed) });
+          }
+        } catch {}
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

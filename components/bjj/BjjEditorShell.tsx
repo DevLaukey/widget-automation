@@ -331,18 +331,17 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
 
   // ── Save to file helper ───────────────────────────────────────────────────
 
-  function saveToFile(updatedConfig: BjjConfig, updatedEvents: SavedEvent[]) {
-    fetch("/api/bjj", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ config: updatedConfig, events: updatedEvents }),
-    }).catch(() => {
-      // Silent fail — localStorage still has the data
-    });
-    // Also keep localStorage in sync as a fallback
+  async function saveToFile(updatedConfig: BjjConfig, updatedEvents: SavedEvent[]) {
+    // Update localStorage immediately as a fallback cache
     localStorage.setItem(KEY_CONFIG, JSON.stringify(updatedConfig));
     localStorage.setItem(KEY_SAVED_AT, new Date().toISOString());
     persistEvents(updatedEvents);
+    // Await the DB write so callers can confirm it succeeded
+    await fetch("/api/bjj", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ config: updatedConfig, events: updatedEvents }),
+    });
   }
 
   // ── Config save ──────────────────────────────────────────────────────────
@@ -447,10 +446,17 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
     showToast(`Loaded "${evt.label}"`);
   }
 
-  function deleteEvent(id: string) {
+  async function deleteEvent(id: string) {
     const updated = savedEvents.filter((e) => e.id !== id);
     setSavedEvents(updated);
-    saveToFile(config, updated);
+    try {
+      await saveToFile(config, updated);
+      showToast("Event deleted");
+    } catch {
+      // Revert UI if DB save failed
+      setSavedEvents(savedEvents);
+      showToast("Delete failed — please try again");
+    }
   }
 
   // ── Export ────────────────────────────────────────────────────────────────

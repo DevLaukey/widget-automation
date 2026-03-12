@@ -82,24 +82,6 @@ export function CounterCard({ card, styles, className = "" }: CounterCardProps) 
       >
         {/* Content Container */}
         <div className="relative z-10 flex flex-col items-center gap-2 sm:gap-3 w-full">
-          {/* 1. Header Label (e.g. "KUMITE") */}
-          {card.label && (
-            <h2
-              className="counter-card__label w-full"
-              style={{
-                color: mergedStyles.colors.text,
-                fontWeight: mergedStyles.fonts.labelWeight,
-                fontFamily: mergedStyles.fonts.family,
-                textTransform: "uppercase",
-                WebkitTextStroke: `1px ${mergedStyles.colors.secondary}`,
-                paintOrder: "stroke fill",
-                margin: 0,
-              }}
-            >
-              {card.label}
-            </h2>
-          )}
-
           {/* Logo - sized to match blue text block */}
           <div className="counter-card__logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -143,24 +125,6 @@ export function CounterCard({ card, styles, className = "" }: CounterCardProps) 
             </h3>
           )}
 
-          {/* Description (additional info) */}
-          {card.description && (
-            <div
-              className="counter-card__description w-full"
-              style={{
-                color: mergedStyles.colors.primary,
-                fontWeight: 600,
-                fontFamily: mergedStyles.fonts.family,
-                textTransform: "uppercase",
-                textAlign: "left",
-                whiteSpace: "pre-line",
-                lineHeight: 1.4,
-                margin: 0,
-              }}
-            >
-              {card.description}
-            </div>
-          )}
         </div>
       </div>
 
@@ -171,17 +135,11 @@ export function CounterCard({ card, styles, className = "" }: CounterCardProps) 
           word-break: break-word;
           overflow-wrap: break-word;
         }
-        .counter-card__label {
-          font-size: ${labelFontSize};
-        }
         .counter-card__value {
           font-size: ${valueFontSize};
         }
         .counter-card__title {
           font-size: ${titleFontSize};
-        }
-        .counter-card__description {
-          font-size: ${mergedStyles.fonts.descriptionFontSize};
         }
         .counter-card__logo-img {
           width: auto;
@@ -193,17 +151,11 @@ export function CounterCard({ card, styles, className = "" }: CounterCardProps) 
             padding: 1.5rem;
             min-height: 140px;
           }
-          .counter-card__label {
-            font-size: clamp(0.75rem, 4vw, ${labelFontSize});
-          }
           .counter-card__value {
             font-size: clamp(2rem, 12vw, ${valueFontSize});
           }
           .counter-card__title {
             font-size: clamp(1rem, 5vw, ${titleFontSize});
-          }
-          .counter-card__description {
-            font-size: clamp(0.75rem, 3vw, ${mergedStyles.fonts.descriptionFontSize});
           }
           .counter-card__logo-img {
             height: clamp(80px, 25vw, 140px);

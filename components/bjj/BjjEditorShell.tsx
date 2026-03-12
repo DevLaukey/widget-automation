@@ -279,6 +279,12 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
   const [copied, setCopied]           = useState(false);
   const [toast, setToast]             = useState("");
 
+  // ── Event form state ──────────────────────────────────────────────────────
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [eventForm, setEventForm] = useState({ name: "", date: "", amount: "" });
+  const [formErrors, setFormErrors] = useState<{ name?: string; date?: string }>({});
+
   // ── Load from file (API), fallback to localStorage ───────────────────────
 
   useEffect(() => {
@@ -385,23 +391,66 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
     showToast(`Attacks saved! (${config.attacks?.length ?? 0} moves)`);
   }
 
-  // ── Events ────────────────────────────────────────────────────────────────
+  // ── Events CRUD ───────────────────────────────────────────────────────────
 
-  function saveAsEvent() {
-    const id  = `evt_${Date.now()}`;
-    const evt: SavedEvent = {
-      id,
-      label:         config.eventLabel,
-      amount:        config.amount,
-      eventDateTime: config.eventDateTime,
-      attacks:       [...(config.attacks ?? DEFAULT_BJJ_ATTACKS)],
-      expiresAt:     expiryAt(config.eventDateTime),
-      createdAt:     new Date().toISOString(),
-    };
-    const updated = [...loadStoredEvents(), evt];
-    setSavedEvents(updated);
-    saveToFile(config, updated);
-    showToast(`Event "${config.eventLabel}" saved — expires 11 PM`);
+  function openCreateForm() {
+    setEventForm({ name: "", date: "", amount: config.amount });
+    setEditingEventId(null);
+    setFormErrors({});
+    setShowEventForm(true);
+  }
+
+  function openEditForm(evt: SavedEvent) {
+    setEventForm({ name: evt.label, date: evt.eventDateTime, amount: evt.amount });
+    setEditingEventId(evt.id);
+    setFormErrors({});
+    setShowEventForm(true);
+  }
+
+  function cancelEventForm() {
+    setShowEventForm(false);
+    setEditingEventId(null);
+    setFormErrors({});
+  }
+
+  function submitEventForm() {
+    const errors: { name?: string; date?: string } = {};
+    if (!eventForm.name.trim()) errors.name = "Event name is required";
+    if (!eventForm.date.trim()) errors.date = "Event date is required";
+    if (Object.keys(errors).length) { setFormErrors(errors); return; }
+
+    const amount = eventForm.amount.trim() || config.amount;
+
+    if (editingEventId) {
+      // Update existing
+      const updated = savedEvents.map((e) =>
+        e.id === editingEventId
+          ? { ...e, label: eventForm.name.trim(), eventDateTime: eventForm.date, amount, expiresAt: expiryAt(eventForm.date) }
+          : e
+      );
+      setSavedEvents(updated);
+      saveToFile(config, updated);
+      showToast(`Event "${eventForm.name.trim()}" updated`);
+    } else {
+      // Create new
+      const evt: SavedEvent = {
+        id:            `evt_${Date.now()}`,
+        label:         eventForm.name.trim(),
+        amount,
+        eventDateTime: eventForm.date,
+        attacks:       [...(config.attacks ?? DEFAULT_BJJ_ATTACKS)],
+        expiresAt:     expiryAt(eventForm.date),
+        createdAt:     new Date().toISOString(),
+      };
+      const updated = [...savedEvents, evt];
+      setSavedEvents(updated);
+      saveToFile(config, updated);
+      showToast(`Event "${evt.label}" created`);
+    }
+
+    setShowEventForm(false);
+    setEditingEventId(null);
+    setFormErrors({});
   }
 
   function loadEvent(evt: SavedEvent) {
@@ -531,14 +580,6 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
           {/* ── CONFIGURE ── */}
           {activeTab === "config" && (
             <>
-              <div className="rounded-lg bg-gray-800 border border-gray-700 p-3 text-xs text-gray-400 space-y-1">
-                <p className="font-semibold text-gray-300">Server-driven mode</p>
-                <p>Attack cycling and mode (loop / event) are controlled live via:</p>
-                <code className="block text-pink-400 break-all mt-1">
-                  ugia-mmeab.ondigitalocean.app/api/aras25/status
-                </code>
-              </div>
-
               <div>
                 <label className="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">
                   Bonus Amount
@@ -653,66 +694,143 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
           {/* ── EVENTS ── */}
           {activeTab === "events" && (
             <>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => downloadTxt(activeEvents)}
-                  className="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-gray-700 hover:bg-gray-600 text-white transition-colors"
-                >
-                  Download Events as TXT
-                </button>
-              </div>
+              {/* Create / Edit form */}
+              {showEventForm ? (
+                <div className="rounded-lg bg-gray-800 border border-pink-700 p-4 space-y-3">
+                  <p className="text-sm font-semibold text-white">
+                    {editingEventId ? "Edit Event" : "New Event"}
+                  </p>
 
-              {activeEvents.length === 0 ? (
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1 uppercase tracking-wide">
+                      Event Name <span className="text-pink-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={eventForm.name}
+                      onChange={(e) => setEventForm((f) => ({ ...f, name: e.target.value }))}
+                      placeholder="e.g. Fight Night #12"
+                      className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    />
+                    {formErrors.name && (
+                      <p className="text-xs text-red-400 mt-1">{formErrors.name}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1 uppercase tracking-wide">
+                      Event Date &amp; Time <span className="text-pink-500">*</span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={eventForm.date}
+                      onChange={(e) => setEventForm((f) => ({ ...f, date: e.target.value }))}
+                      className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 [color-scheme:dark]"
+                    />
+                    {formErrors.date && (
+                      <p className="text-xs text-red-400 mt-1">{formErrors.date}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1 uppercase tracking-wide">
+                      Bonus Amount
+                    </label>
+                    <input
+                      type="text"
+                      value={eventForm.amount}
+                      onChange={(e) => setEventForm((f) => ({ ...f, amount: e.target.value }))}
+                      placeholder={config.amount || "$5,000"}
+                      className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={cancelEventForm}
+                      className="flex-1 py-2 rounded-lg text-sm font-semibold bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={submitEventForm}
+                      className="flex-1 py-2 rounded-lg text-sm font-semibold bg-pink-700 hover:bg-pink-600 text-white transition-colors"
+                    >
+                      {editingEventId ? "Save Changes" : "Create Event"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={openCreateForm}
+                    className="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-pink-700 hover:bg-pink-600 text-white transition-colors"
+                  >
+                    + New Event
+                  </button>
+                  <button
+                    onClick={() => downloadTxt(activeEvents)}
+                    className="px-4 py-2.5 rounded-lg text-sm font-semibold bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                    title="Download as TXT"
+                  >
+                    ↓
+                  </button>
+                </div>
+              )}
+
+              {activeEvents.length === 0 && !showEventForm ? (
                 <div className="rounded-lg bg-gray-800 border border-gray-700 p-4 text-center">
-                  <p className="text-xs text-gray-500">No active events.</p>
+                  <p className="text-xs text-gray-500">No events yet. Create one above.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {activeEvents.map((evt) => {
-                    const expiry = new Date(evt.expiresAt);
-                    const created = new Date(evt.createdAt);
-                    return (
-                      <div
-                        key={evt.id}
-                        className="rounded-lg bg-gray-800 border border-gray-700 p-3 space-y-2"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-white truncate">
-                              {evt.label}
-                            </p>
-                            <p className="text-xs text-pink-400 font-medium">{evt.amount}</p>
-                          </div>
+                  {activeEvents.map((evt) => (
+                    <div
+                      key={evt.id}
+                      className="rounded-lg bg-gray-800 border border-gray-700 p-3 space-y-2"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-white truncate">{evt.label}</p>
+                          <p className="text-xs text-pink-400 font-medium">{evt.amount}</p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => openEditForm(evt)}
+                            className="px-2 py-1 rounded text-xs text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+                            title="Edit event"
+                          >
+                            Edit
+                          </button>
                           <button
                             onClick={() => deleteEvent(evt.id)}
-                            className="text-gray-600 hover:text-red-400 text-lg font-bold shrink-0 transition-colors"
+                            className="px-2 py-1 rounded text-xs text-gray-600 hover:text-red-400 hover:bg-gray-700 transition-colors font-bold"
                             title="Delete event"
                           >
                             ×
                           </button>
                         </div>
-                        <div className="text-xs text-gray-500 space-y-0.5">
-                          <p>Created : {created.toLocaleString()}</p>
-                          <p>Expires : {expiry.toLocaleString()}</p>
-                          <p>Attacks : {evt.attacks.length} moves</p>
-                          {evt.eventDateTime && (
-                            <p>Date    : {new Date(evt.eventDateTime).toLocaleString()}</p>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => loadEvent(evt)}
-                          className="w-full py-1.5 rounded-md text-xs font-semibold bg-purple-700 hover:bg-purple-600 text-white transition-colors"
-                        >
-                          Load into Editor
-                        </button>
                       </div>
-                    );
-                  })}
+                      <div className="text-xs text-gray-500 space-y-0.5">
+                        {evt.eventDateTime && (
+                          <p>Date    : {new Date(evt.eventDateTime).toLocaleString()}</p>
+                        )}
+                        <p>Expires : {new Date(evt.expiresAt).toLocaleString()}</p>
+                        <p>Attacks : {evt.attacks.length} moves</p>
+                      </div>
+                      <button
+                        onClick={() => loadEvent(evt)}
+                        className="w-full py-1.5 rounded-md text-xs font-semibold bg-purple-700 hover:bg-purple-600 text-white transition-colors"
+                      >
+                        Load into Editor
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
 
               <p className="text-xs text-gray-600">
-                Events auto-expire at 11 PM on their event date and are removed from this list.
+                Events auto-expire at 11 PM on their event date.
               </p>
             </>
           )}

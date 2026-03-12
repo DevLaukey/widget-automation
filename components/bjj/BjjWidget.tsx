@@ -135,6 +135,7 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
   const currentAttackRef = useRef("");
   const loopRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isSyncingRef = useRef(false);
+  const hasBootedRef = useRef(false);
 
   // Sync attacks list whenever config.attacks changes
   useEffect(() => {
@@ -220,6 +221,12 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
 
       const shouldLoop = !!data.isLooping;
 
+      // Before boot completes, only act on transitions TO looping — never stop
+      // the loop based on stale server state from a previous event.
+      if (!hasBootedRef.current && !shouldLoop) {
+        return;
+      }
+
       if (shouldLoop !== isLoopingRef.current) {
         // Mode changed
         isLoopingRef.current = shouldLoop;
@@ -272,6 +279,8 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
       setIsLooping(false);
     }
 
+    hasBootedRef.current = false;
+
     // Boot: restore saved attack state from server, then start loop
     (async () => {
       try {
@@ -295,6 +304,7 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
       }
 
       if (isLoopingRef.current && !isEndedRef.current) startLoop();
+      hasBootedRef.current = true;
       syncWithServer();
     })();
 

@@ -302,8 +302,11 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
         }
         const parsed: BjjConfig = data.config;
         setConfig({ ...parsed, attacks: parsed.attacks?.length ? parsed.attacks : [...DEFAULT_BJJ_ATTACKS] });
+        console.log("[load] raw events from server:", data.events?.length ?? 0);
         if (Array.isArray(data.events)) {
-          setSavedEvents(data.events.filter((e: SavedEvent) => new Date(e.expiresAt).getTime() > Date.now()));
+          const active = data.events.filter((e: SavedEvent) => new Date(e.expiresAt).getTime() > Date.now());
+          console.log("[load] active (non-expired) events:", active.length);
+          setSavedEvents(active);
         }
       })
       .catch(() => {
@@ -332,16 +335,24 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
   // ── Save to file helper ───────────────────────────────────────────────────
 
   async function saveToFile(updatedConfig: BjjConfig, updatedEvents: SavedEvent[]) {
+    console.log("[saveToFile] saving events:", updatedEvents.length, updatedEvents.map(e => e.label));
     // Update localStorage immediately as a fallback cache
     localStorage.setItem(KEY_CONFIG, JSON.stringify(updatedConfig));
     localStorage.setItem(KEY_SAVED_AT, new Date().toISOString());
     persistEvents(updatedEvents);
     // Await the DB write so callers can confirm it succeeded
-    await fetch("/api/bjj", {
+    const res = await fetch("/api/bjj", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ config: updatedConfig, events: updatedEvents }),
     });
+    console.log("[saveToFile] POST status:", res.status);
+    if (!res.ok) {
+      const body = await res.text();
+      console.error("[saveToFile] POST error body:", body);
+      throw new Error(`Save failed: ${res.status}`);
+    }
+    console.log("[saveToFile] success");
   }
 
   // ── Config save ──────────────────────────────────────────────────────────
@@ -404,6 +415,7 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
   }
 
   async function submitEventForm() {
+    console.log("[submitEventForm] form:", eventForm);
     const errors: { name?: string; date?: string } = {};
     if (!eventForm.name.trim()) errors.name = "Event name is required";
     if (!eventForm.date.trim()) errors.date = "Event date is required";
@@ -433,6 +445,7 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
           expiresAt:     expiryAt(eventForm.date),
           createdAt:     new Date().toISOString(),
         };
+        console.log("[submitEventForm] new event:", evt.label, "expiresAt:", evt.expiresAt, "expired?", new Date(evt.expiresAt).getTime() < Date.now());
         const updated = [...savedEvents, evt];
         setSavedEvents(updated);
         await saveToFile(config, updated);

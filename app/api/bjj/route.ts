@@ -17,6 +17,12 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    // Strip expired events before persisting
+    if (Array.isArray(body.events)) {
+      body.events = body.events.filter(
+        (e: { expiresAt: string }) => new Date(e.expiresAt).getTime() > Date.now()
+      );
+    }
     await dbSetWithTimestamp(KEY, body);
     return NextResponse.json({ success: true });
   } catch {

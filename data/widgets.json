@@ -5,7 +5,7 @@
     {
       "id": "card-1",
       "label": "",
-      "title": "Total Revenue",
+      "title": "Total ",
       "description": "",
       "animation": {
         "startValue": 0,
@@ -97,5 +97,5 @@
   },
   "apiUrl": "https://ugia-mmeab.ondigitalocean.app/api/groups/b13bd078",
   "createdAt": "2026-03-04T06:44:41.888Z",
-  "updatedAt": "2026-03-04T06:45:31.184Z"
+  "updatedAt": "2026-03-12T13:05:18.241Z"
 }

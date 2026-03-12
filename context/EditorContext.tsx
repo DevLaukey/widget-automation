@@ -437,8 +437,18 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     fetch("/api/widget")
       .then((res) => res.json())
       .then((data) => {
+        const localWidget = (() => {
+          try {
+            const raw = localStorage.getItem(LOCAL_CONFIG_KEY);
+            return raw ? (JSON.parse(raw) as WidgetConfig) : null;
+          } catch { return null; }
+        })();
+
         if (data && data.id) {
-          const widget = restoreIcons(data);
+          // Prefer localStorage if it has a more recent updatedAt
+          const serverTime = data.updatedAt ? new Date(data.updatedAt).getTime() : 0;
+          const localTime = localWidget?.updatedAt ? new Date(localWidget.updatedAt).getTime() : 0;
+          const widget = localTime > serverTime ? restoreIcons(localWidget!) : restoreIcons(data);
           dispatch({ type: "SET_WIDGET", payload: widget });
           return widget;
         }

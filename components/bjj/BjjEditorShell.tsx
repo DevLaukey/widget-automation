@@ -346,9 +346,13 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
 
   // ── Config save ──────────────────────────────────────────────────────────
 
-  function saveConfig() {
-    saveToFile(config, savedEvents);
-    showToast("Config saved!");
+  async function saveConfig() {
+    try {
+      await saveToFile(config, savedEvents);
+      showToast("Config saved!");
+    } catch {
+      showToast("Save failed — please try again");
+    }
   }
 
   // ── Attacks ──────────────────────────────────────────────────────────────
@@ -368,9 +372,13 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
     update({ attacks: [...DEFAULT_BJJ_ATTACKS] });
   }
 
-  function saveAttacks() {
-    saveToFile(config, savedEvents);
-    showToast(`Attacks saved! (${config.attacks?.length ?? 0} moves)`);
+  async function saveAttacks() {
+    try {
+      await saveToFile(config, savedEvents);
+      showToast(`Attacks saved! (${config.attacks?.length ?? 0} moves)`);
+    } catch {
+      showToast("Save failed — please try again");
+    }
   }
 
   // ── Events CRUD ───────────────────────────────────────────────────────────
@@ -395,7 +403,7 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
     setFormErrors({});
   }
 
-  function submitEventForm() {
+  async function submitEventForm() {
     const errors: { name?: string; date?: string } = {};
     if (!eventForm.name.trim()) errors.name = "Event name is required";
     if (!eventForm.date.trim()) errors.date = "Event date is required";
@@ -403,31 +411,36 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
 
     const amount = eventForm.amount.trim() || config.amount;
 
-    if (editingEventId) {
-      // Update existing
-      const updated = savedEvents.map((e) =>
-        e.id === editingEventId
-          ? { ...e, label: eventForm.name.trim(), eventDateTime: eventForm.date, amount, expiresAt: expiryAt(eventForm.date) }
-          : e
-      );
-      setSavedEvents(updated);
-      saveToFile(config, updated);
-      showToast(`Event "${eventForm.name.trim()}" updated`);
-    } else {
-      // Create new
-      const evt: SavedEvent = {
-        id:            `evt_${Date.now()}`,
-        label:         eventForm.name.trim(),
-        amount,
-        eventDateTime: eventForm.date,
-        attacks:       [...(config.attacks ?? DEFAULT_BJJ_ATTACKS)],
-        expiresAt:     expiryAt(eventForm.date),
-        createdAt:     new Date().toISOString(),
-      };
-      const updated = [...savedEvents, evt];
-      setSavedEvents(updated);
-      saveToFile(config, updated);
-      showToast(`Event "${evt.label}" created`);
+    try {
+      if (editingEventId) {
+        // Update existing
+        const updated = savedEvents.map((e) =>
+          e.id === editingEventId
+            ? { ...e, label: eventForm.name.trim(), eventDateTime: eventForm.date, amount, expiresAt: expiryAt(eventForm.date) }
+            : e
+        );
+        setSavedEvents(updated);
+        await saveToFile(config, updated);
+        showToast(`Event "${eventForm.name.trim()}" updated`);
+      } else {
+        // Create new
+        const evt: SavedEvent = {
+          id:            `evt_${Date.now()}`,
+          label:         eventForm.name.trim(),
+          amount,
+          eventDateTime: eventForm.date,
+          attacks:       [...(config.attacks ?? DEFAULT_BJJ_ATTACKS)],
+          expiresAt:     expiryAt(eventForm.date),
+          createdAt:     new Date().toISOString(),
+        };
+        const updated = [...savedEvents, evt];
+        setSavedEvents(updated);
+        await saveToFile(config, updated);
+        showToast(`Event "${evt.label}" created`);
+      }
+    } catch {
+      showToast("Save failed — please try again");
+      return;
     }
 
     setShowEventForm(false);

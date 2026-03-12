@@ -1,31 +1,20 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface BjjConfig {
   amount: string;
   eventLabel: string;
-  eventDateTime: string; // ISO / datetime-local string — empty means no end time
+  eventDateTime: string; // ISO / datetime-local string — when to freeze
+  expiresAt?: string;    // ISO — when to resume looping (11 PM of event date)
   attacks?: string[];    // custom attacks list; falls back to DEFAULT_BJJ_ATTACKS
-}
-
-interface ServerState {
-  isLooping?: boolean;
-  currentAttack?: string;
-  selectedAttackOnStop?: string;
-  attacks?: string[];
-  currentEvent?: { id: string; name: string };
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const API_BASE    = "https://ugia-mmeab.ondigitalocean.app";
-const API_STATUS  = `${API_BASE}/api/aras25/status`;
-const API_TEXT    = `${API_BASE}/api/aras25/attack/text`;
-const API_CURRENT = `${API_BASE}/api/aras25/current-attack`;
-const SYNC_INTERVAL = 3000;
 const LOOP_INTERVAL = 200;
 
 export const DEFAULT_BJJ_ATTACKS = [
@@ -117,43 +106,39 @@ export const DEFAULT_BJJ_CONFIG: BjjConfig = {
 
 // ─── Widget ───────────────────────────────────────────────────────────────────
 
-export function BjjWidget({ config }: { config: BjjConfig }) {
-  const { amount, eventLabel, eventDateTime } = config;
+export function BjjWidget({
+  config,
+  initialAttack,
+  onStop,
+}: {
+  config: BjjConfig;
+  initialAttack?: string;
+  onStop?: (attack: string) => void;
+}) {
+  const { amount, eventLabel, eventDateTime, expiresAt } = config;
 
   const [isLooping, setIsLooping] = useState(true);
   const [isEnded, setIsEnded] = useState(false);
-  const [displayAttack, setDisplayAttack] = useState("");
-  const [isConnected, setIsConnected] = useState(false);
-  const [displayEventLabel, setDisplayEventLabel] = useState(eventLabel);
+  const [displayAttack, setDisplayAttack] = useState(initialAttack ?? "");
 
-  // Refs so interval callbacks always see fresh values
-  const localAttacksRef = useRef<string[]>(
+  const attacksRef = useRef<string[]>(
     config.attacks?.length ? [...config.attacks] : [...DEFAULT_BJJ_ATTACKS]
   );
-  const isLoopingRef = useRef(true);
-  const isEndedRef = useRef(false);
-  const currentAttackRef = useRef("");
   const loopRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isSyncingRef = useRef(false);
-  const hasBootedRef = useRef(false);
+  const isEndedRef = useRef(false);
+  const currentAttackRef = useRef(initialAttack ?? "");
+  const onStopRef = useRef(onStop);
+  onStopRef.current = onStop;
 
-  // Sync attacks list whenever config.attacks changes
+  // Keep attacks ref in sync with config
   useEffect(() => {
-    const list = config.attacks?.length ? config.attacks : DEFAULT_BJJ_ATTACKS;
-    localAttacksRef.current = [...list];
+    attacksRef.current = config.attacks?.length ? [...config.attacks] : [...DEFAULT_BJJ_ATTACKS];
   }, [config.attacks]);
-
-  // Sync event label from config prop (editor live preview)
-  useEffect(() => {
-    setDisplayEventLabel(eventLabel);
-  }, [eventLabel]);
-
-  // ── Loop control ────────────────────────────────────────────────────────────
 
   const startLoop = useCallback(() => {
     if (loopRef.current) return;
     loopRef.current = setInterval(() => {
-      const list = localAttacksRef.current;
+      const list = attacksRef.current;
       if (!list.length) return;
       const attack = list[Math.floor(Math.random() * list.length)];
       currentAttackRef.current = attack;
@@ -162,179 +147,66 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
   }, []);
 
   const stopLoop = useCallback(() => {
-    if (loopRef.current) {
-      clearInterval(loopRef.current);
-      loopRef.current = null;
-    }
+    if (loopRef.current) { clearInterval(loopRef.current); loopRef.current = null; }
   }, []);
-
-  // ── Server sync ─────────────────────────────────────────────────────────────
-
-  const syncWithServer = useCallback(async () => {
-    if (isSyncingRef.current) return;
-    isSyncingRef.current = true;
-
-    try {
-      let data: ServerState | null = null;
-
-      // Primary endpoint
-      try {
-        const res = await fetch(API_STATUS, { cache: "no-cache" });
-        if (res.ok) {
-          data = await res.json();
-          setIsConnected(true);
-        }
-      } catch {
-        // Fallback to legacy text endpoint
-        try {
-          const res = await fetch(API_TEXT, { cache: "no-cache" });
-          if (res.ok) {
-            const text = await res.text();
-            data = { isLooping: true, currentAttack: text.trim() };
-            setIsConnected(true);
-          }
-        } catch {
-          setIsConnected(false);
-        }
-      }
-
-      if (!data) {
-        setIsConnected(false);
-        return;
-      }
-
-      // Update attacks list if server provides one
-      if (Array.isArray(data.attacks) && data.attacks.length > 0) {
-        localAttacksRef.current = data.attacks;
-      }
-
-      // Update event label if server provides one
-      if (data.currentEvent?.name) {
-        setDisplayEventLabel(data.currentEvent.name);
-      }
-
-      // Don't change loop state once the event has ended
-      if (isEndedRef.current) {
-        stopLoop();
-        return;
-      }
-
-      const shouldLoop = !!data.isLooping;
-
-      // Before boot completes, only act on transitions TO looping — never stop
-      // the loop based on stale server state from a previous event.
-      if (!hasBootedRef.current && !shouldLoop) {
-        return;
-      }
-
-      if (shouldLoop !== isLoopingRef.current) {
-        // Mode changed
-        isLoopingRef.current = shouldLoop;
-        setIsLooping(shouldLoop);
-
-        if (shouldLoop) {
-          startLoop();
-        } else {
-          stopLoop();
-          const attack =
-            data.selectedAttackOnStop ||
-            data.currentAttack ||
-            currentAttackRef.current;
-          currentAttackRef.current = attack ?? "";
-          setDisplayAttack(attack ?? "");
-        }
-      } else if (!shouldLoop) {
-        // Still in event mode — update attack if it changed
-        const attack =
-          data.selectedAttackOnStop ||
-          data.currentAttack ||
-          currentAttackRef.current;
-        if (attack && attack !== currentAttackRef.current) {
-          currentAttackRef.current = attack;
-          setDisplayAttack(attack);
-        }
-      }
-    } finally {
-      isSyncingRef.current = false;
-    }
-  }, [startLoop, stopLoop]);
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    // Reset ended state whenever eventDateTime changes (e.g. event removed)
     isEndedRef.current = false;
-    isLoopingRef.current = true;
     setIsEnded(false);
     setIsLooping(true);
 
-    // Check if the event end time has already passed
-    const eventEnd = eventDateTime ? new Date(eventDateTime) : null;
-    const alreadyEnded = eventEnd ? Date.now() >= eventEnd.getTime() : false;
+    const now = Date.now();
+    const eventEnd    = eventDateTime ? new Date(eventDateTime) : null;
+    const eventExpiry = expiresAt     ? new Date(expiresAt)     : null;
 
-    if (alreadyEnded) {
+    const alreadyExpired = eventExpiry ? now >= eventExpiry.getTime() : false;
+    const alreadyFrozen  = !alreadyExpired && eventEnd ? now >= eventEnd.getTime() : false;
+
+    let endTimer:    ReturnType<typeof setTimeout> | null = null;
+    let expiryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function scheduleResume(delay: number) {
+      expiryTimer = setTimeout(() => {
+        isEndedRef.current = false;
+        setIsEnded(false);
+        setIsLooping(true);
+        startLoop();
+      }, delay);
+    }
+
+    if (alreadyFrozen) {
+      // Event time has passed but expiry hasn't — show frozen attack
       isEndedRef.current = true;
-      isLoopingRef.current = false;
       setIsEnded(true);
       setIsLooping(false);
-    }
-
-    hasBootedRef.current = false;
-
-    // Boot: restore saved attack state from server, then start loop
-    (async () => {
-      try {
-        const res = await fetch(API_CURRENT, { cache: "no-cache" });
-        if (res.ok) {
-          const saved = await res.json();
-          if (saved?.attack) {
-            currentAttackRef.current = saved.attack;
-            setDisplayAttack(saved.attack);
-          }
-          if (saved?.isLooping === false) {
-            isLoopingRef.current = false;
-            setIsLooping(false);
-            const attack = saved.selectedAttackOnStop || saved.attack || "";
-            currentAttackRef.current = attack;
-            setDisplayAttack(attack);
-          }
-        }
-      } catch {
-        // ignore — fall through to default loop
+      if (initialAttack) {
+        currentAttackRef.current = initialAttack;
+        setDisplayAttack(initialAttack);
       }
-
-      if (isLoopingRef.current && !isEndedRef.current) startLoop();
-      hasBootedRef.current = true;
-      syncWithServer();
-    })();
-
-    const syncTimer = setInterval(syncWithServer, SYNC_INTERVAL);
-
-    // Schedule auto-stop when event end time arrives
-    let endTimer: ReturnType<typeof setTimeout> | null = null;
-    if (eventEnd && !alreadyEnded) {
-      const msUntilEnd = eventEnd.getTime() - Date.now();
-      endTimer = setTimeout(() => {
-        isEndedRef.current = true;
-        isLoopingRef.current = false;
-        setIsEnded(true);
-        setIsLooping(false);
-        stopLoop();
-      }, msUntilEnd);
+      if (eventExpiry) scheduleResume(eventExpiry.getTime() - now);
+    } else {
+      startLoop();
+      if (eventEnd && !alreadyExpired) {
+        endTimer = setTimeout(() => {
+          isEndedRef.current = true;
+          setIsEnded(true);
+          setIsLooping(false);
+          stopLoop();
+          onStopRef.current?.(currentAttackRef.current);
+          if (eventExpiry) scheduleResume(eventExpiry.getTime() - Date.now());
+        }, eventEnd.getTime() - now);
+      }
     }
-
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") syncWithServer();
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
       stopLoop();
-      clearInterval(syncTimer);
-      if (endTimer) clearTimeout(endTimer);
-      document.removeEventListener("visibilitychange", handleVisibility);
+      if (endTimer)    clearTimeout(endTimer);
+      if (expiryTimer) clearTimeout(expiryTimer);
     };
-  }, [startLoop, stopLoop, syncWithServer, eventDateTime]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startLoop, stopLoop, eventDateTime, expiresAt]);
 
   // ── Derived styles ────────────────────────────────────────────────────────────
 
@@ -364,25 +236,6 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
         position: "relative",
       }}
     >
-      {/* Connection dot */}
-      <div
-        title={
-          isConnected
-            ? "Live — connected to server"
-            : "Offline — using defaults"
-        }
-        style={{
-          position: "absolute",
-          top: 14,
-          right: 14,
-          width: 8,
-          height: 8,
-          borderRadius: "50%",
-          background: isConnected ? "#00ff41" : "#666",
-          boxShadow: isConnected ? "0 0 6px #00ff41" : "none",
-        }}
-      />
-
       {/* Logo */}
       <div className={isEnded ? "" : isLooping ? "bjj-logo-spark" : "bjj-logo-rgb"}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -431,7 +284,7 @@ export function BjjWidget({ config }: { config: BjjConfig }) {
           transition: "color 0.4s ease, text-shadow 0.4s ease",
         }}
       >
-        {displayEventLabel}
+        {eventLabel}
       </div>
 
       {/* Attack Name */}

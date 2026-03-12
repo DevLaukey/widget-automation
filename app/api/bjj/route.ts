@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { dbGet, dbSetWithTimestamp, dbUpdatedAt } from "@/lib/db";
+import { dbGet, dbSet, dbSetWithTimestamp, dbUpdatedAt } from "@/lib/db";
 
 const KEY = "bjj";
 
@@ -17,15 +17,25 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    // Strip expired events before persisting
-    if (Array.isArray(body.events)) {
-      body.events = body.events.filter(
-        (e: { expiresAt: string }) => new Date(e.expiresAt).getTime() > Date.now()
-      );
-    }
-    await dbSetWithTimestamp(KEY, body);
+    // Preserve stoppedAttack so editor saves don't wipe the widget's stopped state
+    const existing = (await dbGet<Record<string, unknown>>(KEY)) ?? {};
+    const toSave = existing.stoppedAttack !== undefined
+      ? { ...body, stoppedAttack: existing.stoppedAttack }
+      : body;
+    await dbSetWithTimestamp(KEY, toSave);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Failed to save BJJ data" }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const { stoppedAttack } = await request.json();
+    const existing = (await dbGet<Record<string, unknown>>(KEY)) ?? {};
+    await dbSet(KEY, { ...existing, stoppedAttack });
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Failed to save stopped attack" }, { status: 500 });
   }
 }

@@ -165,6 +165,7 @@ body { background: transparent; }
   var API_STATUS    = 'https://ugia-mmeab.ondigitalocean.app/api/aras25/status';
   var API_TEXT      = 'https://ugia-mmeab.ondigitalocean.app/api/aras25/attack/text';
   var EVENT_END     = ${config.eventDateTime ? `new Date('${config.eventDateTime}')` : "null"};
+  var EVENT_EXPIRY  = ${config.expiresAt ? `new Date('${config.expiresAt}')` : "null"};
   var SYNC_INTERVAL = 3000;
   var LOOP_INTERVAL = 200;
 
@@ -245,11 +246,30 @@ body { background: transparent; }
     } finally { isSyncing = false; }
   }
 
-  if (EVENT_END && Date.now() >= EVENT_END.getTime()) {
+  function scheduleResume(delay) {
+    setTimeout(function () {
+      isEnded   = false;
+      isLooping = true;
+      setMode(true);
+      startLoop();
+    }, delay);
+  }
+
+  var now            = Date.now();
+  var alreadyExpired = EVENT_EXPIRY && now >= EVENT_EXPIRY.getTime();
+  var alreadyFrozen  = !alreadyExpired && EVENT_END && now >= EVENT_END.getTime();
+
+  if (alreadyFrozen) {
     endEvent();
+    if (EVENT_EXPIRY) scheduleResume(EVENT_EXPIRY.getTime() - now);
   } else {
     startLoop();
-    if (EVENT_END) setTimeout(endEvent, EVENT_END.getTime() - Date.now());
+    if (EVENT_END && !alreadyExpired) {
+      setTimeout(function () {
+        endEvent();
+        if (EVENT_EXPIRY) scheduleResume(EVENT_EXPIRY.getTime() - Date.now());
+      }, EVENT_END.getTime() - now);
+    }
   }
 
   syncWithServer();
@@ -466,6 +486,7 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
       amount:        evt.amount,
       eventLabel:    evt.label,
       eventDateTime: evt.eventDateTime,
+      expiresAt:     evt.expiresAt,
       attacks:       evt.attacks,
     });
     setActiveTab("config");
@@ -473,14 +494,32 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
   }
 
   async function deleteEvent(id: string) {
+    const toDelete = savedEvents.find((e) => e.id === id);
     const updated = savedEvents.filter((e) => e.id !== id);
     setSavedEvents(updated);
+
+    // If this event's datetime is currently loaded in the config, clear it
+    // so the preview widget restarts looping
+    const updatedConfig =
+      toDelete && toDelete.eventDateTime === config.eventDateTime
+        ? { ...config, eventDateTime: "", expiresAt: "" }
+        : config;
+    if (updatedConfig !== config) setConfig(updatedConfig);
+
     try {
-      await saveToFile(config, updated);
+      await saveToFile(updatedConfig, updated);
+      // If we cleared the active event's datetime, also clear the stopped attack
+      if (updatedConfig !== config) {
+        fetch("/api/bjj", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stoppedAttack: null }),
+        }).catch(() => {});
+      }
       showToast("Event deleted");
     } catch {
-      // Revert UI if DB save failed
       setSavedEvents(savedEvents);
+      setConfig(config);
       showToast("Delete failed — please try again");
     }
   }
@@ -623,17 +662,15 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
 
               <div>
                 <label className="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">
-                  Event End Date &amp; Time
+                  Active Event
                 </label>
-                <input
-                  type="datetime-local"
-                  value={config.eventDateTime}
-                  onChange={(e) => update({ eventDateTime: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 [color-scheme:dark]"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  When this time is reached the loop stops and animations freeze. Leave blank for manual control.
-                </p>
+                <div className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-sm">
+                  {activeEvents.length > 0 ? (
+                    <span className="text-white">{activeEvents[0].label} — {new Date(activeEvents[0].eventDateTime).toLocaleString()}</span>
+                  ) : (
+                    <span className="text-gray-500 italic">null</span>
+                  )}
+                </div>
               </div>
 
               <div className="flex gap-2 pt-1">

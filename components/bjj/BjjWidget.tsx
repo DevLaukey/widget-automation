@@ -8,9 +8,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 export interface BjjConfig {
   amount: string;
   eventLabel: string;
-  eventDateTime: string; // ISO / datetime-local string — when to freeze
-  expiresAt?: string;    // ISO — when to resume looping (11 PM of event date)
-  attacks?: string[];    // custom attacks list; falls back to DEFAULT_BJJ_ATTACKS
+  eventDateTime: string;    // ISO / datetime-local string — when to freeze
+  expiresAt?: string;       // ISO — when to resume looping (11 PM of event date)
+  activeAttackName?: string; // the attack to display while the event is active
+  attacks?: string[];        // custom attacks list; falls back to DEFAULT_BJJ_ATTACKS
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -110,12 +111,14 @@ export function BjjWidget({
   config,
   initialAttack,
   onStop,
+  onResume,
 }: {
   config: BjjConfig;
   initialAttack?: string;
   onStop?: (attack: string) => void;
+  onResume?: () => void;
 }) {
-  const { amount, eventLabel, eventDateTime, expiresAt } = config;
+  const { amount, eventLabel, eventDateTime, expiresAt, activeAttackName } = config;
 
   const [isLooping, setIsLooping] = useState(true);
   const [isEnded, setIsEnded] = useState(false);
@@ -127,8 +130,10 @@ export function BjjWidget({
   const loopRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isEndedRef = useRef(false);
   const currentAttackRef = useRef(initialAttack ?? "");
-  const onStopRef = useRef(onStop);
-  onStopRef.current = onStop;
+  const onStopRef   = useRef(onStop);
+  const onResumeRef = useRef(onResume);
+  onStopRef.current   = onStop;
+  onResumeRef.current = onResume;
 
   // Keep attacks ref in sync with config
   useEffect(() => {
@@ -172,19 +177,19 @@ export function BjjWidget({
         isEndedRef.current = false;
         setIsEnded(false);
         setIsLooping(true);
+        onResumeRef.current?.();
         startLoop();
       }, delay);
     }
 
     if (alreadyFrozen) {
-      // Event time has passed but expiry hasn't — show frozen attack
+      // Event time has passed but expiry hasn't — show the event's attack
       isEndedRef.current = true;
       setIsEnded(true);
       setIsLooping(false);
-      if (initialAttack) {
-        currentAttackRef.current = initialAttack;
-        setDisplayAttack(initialAttack);
-      }
+      const attack = activeAttackName || "";
+      currentAttackRef.current = attack;
+      setDisplayAttack(attack);
       if (eventExpiry) scheduleResume(eventExpiry.getTime() - now);
     } else {
       startLoop();
@@ -194,7 +199,10 @@ export function BjjWidget({
           setIsEnded(true);
           setIsLooping(false);
           stopLoop();
-          onStopRef.current?.(currentAttackRef.current);
+          const attack = activeAttackName || currentAttackRef.current;
+          currentAttackRef.current = attack;
+          setDisplayAttack(attack);
+          onStopRef.current?.(attack);
           if (eventExpiry) scheduleResume(eventExpiry.getTime() - Date.now());
         }, eventEnd.getTime() - now);
       }
@@ -206,7 +214,7 @@ export function BjjWidget({
       if (expiryTimer) clearTimeout(expiryTimer);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startLoop, stopLoop, eventDateTime, expiresAt]);
+  }, [startLoop, stopLoop, eventDateTime, expiresAt, activeAttackName]);
 
   // ── Derived styles ────────────────────────────────────────────────────────────
 

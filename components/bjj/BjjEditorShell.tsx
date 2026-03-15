@@ -15,6 +15,7 @@ interface SavedEvent {
   label: string;
   amount: string;
   eventDateTime: string;
+  attackName: string;  // the attack shown when this event is active
   attacks: string[];
   expiresAt: string; // ISO — 11 PM of event date
   createdAt: string;
@@ -27,10 +28,33 @@ const KEY_CONFIG   = "bjj_config";
 const KEY_SAVED_AT = "bjj_saved_at";
 
 function expiryAt(eventDateTime: string): string {
+  // eventDateTime is a UTC ISO string — set 11 PM in the local (admin) timezone
   const base = eventDateTime ? new Date(eventDateTime) : new Date();
   const d = new Date(base);
-  d.setHours(23, 0, 0, 0); // 11 PM
+  d.setHours(23, 0, 0, 0); // 11 PM local time
   return d.toISOString();
+}
+
+/** Convert a UTC ISO string back to the "YYYY-MM-DDTHH:mm" format that
+ *  <input type="datetime-local"> expects (always in the user's local time). */
+function toDatetimeLocal(isoString: string): string {
+  if (!isoString) return "";
+  const d = new Date(isoString);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** Returns the local timezone abbreviation or offset string (e.g. "EST" or "UTC+5:30"). */
+function getLocalTzLabel(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    const offset = -new Date().getTimezoneOffset();
+    const sign   = offset >= 0 ? "+" : "-";
+    const h      = String(Math.floor(Math.abs(offset) / 60)).padStart(2, "0");
+    const m      = String(Math.abs(offset) % 60).padStart(2, "0");
+    return `UTC${sign}${h}:${m}`;
+  }
 }
 
 function loadStoredEvents(): SavedEvent[] {
@@ -166,6 +190,7 @@ body { background: transparent; }
   var API_TEXT      = 'https://ugia-mmeab.ondigitalocean.app/api/aras25/attack/text';
   var EVENT_END     = ${config.eventDateTime ? `new Date('${config.eventDateTime}')` : "null"};
   var EVENT_EXPIRY  = ${config.expiresAt ? `new Date('${config.expiresAt}')` : "null"};
+  var EVENT_ATTACK  = ${config.activeAttackName ? `'${config.activeAttackName.replace(/'/g, "\\'")}'` : "null"};
   var SYNC_INTERVAL = 3000;
   var LOOP_INTERVAL = 200;
 
@@ -261,12 +286,14 @@ body { background: transparent; }
 
   if (alreadyFrozen) {
     endEvent();
+    if (EVENT_ATTACK) showAttack(EVENT_ATTACK);
     if (EVENT_EXPIRY) scheduleResume(EVENT_EXPIRY.getTime() - now);
   } else {
     startLoop();
     if (EVENT_END && !alreadyExpired) {
       setTimeout(function () {
         endEvent();
+        if (EVENT_ATTACK) showAttack(EVENT_ATTACK);
         if (EVENT_EXPIRY) scheduleResume(EVENT_EXPIRY.getTime() - Date.now());
       }, EVENT_END.getTime() - now);
     }
@@ -422,7 +449,7 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
   }
 
   function openEditForm(evt: SavedEvent) {
-    setEventForm({ name: evt.label, date: evt.eventDateTime, amount: evt.amount });
+    setEventForm({ name: evt.label, date: toDatetimeLocal(evt.eventDateTime), amount: evt.amount });
     setEditingEventId(evt.id);
     setFormErrors({});
     setShowEventForm(true);
@@ -442,34 +469,47 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
     if (Object.keys(errors).length) { setFormErrors(errors); return; }
 
     const amount = eventForm.amount.trim() || config.amount;
+    // Convert the local datetime-local value to a UTC ISO string so that
+    // all viewers (regardless of timezone) see the event trigger at the
+    // same universal moment.
+    const eventDateTimeUTC = new Date(eventForm.date).toISOString();
 
     try {
       if (editingEventId) {
-        // Update existing
+        // Update existing — keep the original attack name
         const updated = savedEvents.map((e) =>
           e.id === editingEventId
-            ? { ...e, label: eventForm.name.trim(), eventDateTime: eventForm.date, amount, expiresAt: expiryAt(eventForm.date) }
+            ? { ...e, label: eventForm.name.trim(), eventDateTime: eventDateTimeUTC, amount, expiresAt: expiryAt(eventDateTimeUTC) }
             : e
         );
         setSavedEvents(updated);
         await saveToFile(config, updated);
         showToast(`Event "${eventForm.name.trim()}" updated`);
       } else {
-        // Create new
+        // Create new — pick a random attack from the current list
+        const list = config.attacks?.length ? config.attacks : DEFAULT_BJJ_ATTACKS;
+        const attackName = list[Math.floor(Math.random() * list.length)];
         const evt: SavedEvent = {
           id:            `evt_${Date.now()}`,
           label:         eventForm.name.trim(),
           amount,
-          eventDateTime: eventForm.date,
-          attacks:       [...(config.attacks ?? DEFAULT_BJJ_ATTACKS)],
-          expiresAt:     expiryAt(eventForm.date),
+          eventDateTime: eventDateTimeUTC,
+          attackName,
+          attacks:       [...list],
+          expiresAt:     expiryAt(eventDateTimeUTC),
           createdAt:     new Date().toISOString(),
         };
-        console.log("[submitEventForm] new event:", evt.label, "expiresAt:", evt.expiresAt, "expired?", new Date(evt.expiresAt).getTime() < Date.now());
         const updated = [...savedEvents, evt];
         setSavedEvents(updated);
         await saveToFile(config, updated);
-        showToast(`Event "${evt.label}" created`);
+
+        // Auto-load if the event is already active (start time has passed)
+        if (new Date(evt.eventDateTime).getTime() <= Date.now()) {
+          loadEvent(evt);
+          showToast(`Event "${evt.label}" created & loaded`);
+        } else {
+          showToast(`Event "${evt.label}" created`);
+        }
       }
     } catch {
       showToast("Save failed — please try again");
@@ -483,11 +523,12 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
 
   function loadEvent(evt: SavedEvent) {
     setConfig({
-      amount:        evt.amount,
-      eventLabel:    evt.label,
-      eventDateTime: evt.eventDateTime,
-      expiresAt:     evt.expiresAt,
-      attacks:       evt.attacks,
+      amount:           evt.amount,
+      eventLabel:       evt.label,
+      eventDateTime:    evt.eventDateTime,
+      expiresAt:        evt.expiresAt,
+      activeAttackName: evt.attackName,
+      attacks:          evt.attacks,
     });
     setActiveTab("config");
     showToast(`Loaded "${evt.label}"`);
@@ -502,7 +543,7 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
     // so the preview widget restarts looping
     const updatedConfig =
       toDelete && toDelete.eventDateTime === config.eventDateTime
-        ? { ...config, eventDateTime: "", expiresAt: "" }
+        ? { ...config, eventDateTime: "", expiresAt: "", activeAttackName: "" }
         : config;
     if (updatedConfig !== config) setConfig(updatedConfig);
 
@@ -535,10 +576,18 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
 
   // ── Derived ───────────────────────────────────────────────────────────────
 
-  const attacks      = config.attacks ?? DEFAULT_BJJ_ATTACKS;
-  const activeEvents = savedEvents.filter(
-    (e) => new Date(e.expiresAt).getTime() > Date.now()
-  );
+  const attacks = config.attacks ?? DEFAULT_BJJ_ATTACKS;
+
+  // Non-expired events sorted chronologically — upcoming first, then live
+  const activeEvents = savedEvents
+    .filter((e) => new Date(e.expiresAt).getTime() > Date.now())
+    .sort((a, b) => new Date(a.eventDateTime).getTime() - new Date(b.eventDateTime).getTime());
+
+  // The live event: most recently started (highest eventDateTime ≤ now, not yet expired)
+  const now = Date.now();
+  const liveEvent = [...activeEvents]
+    .sort((a, b) => new Date(b.eventDateTime).getTime() - new Date(a.eventDateTime).getTime())
+    .find((e) => new Date(e.eventDateTime).getTime() <= now && now < new Date(e.expiresAt).getTime());
 
   const tabLabels: { key: Tab; label: string }[] = [
     { key: "config",  label: "Configure" },
@@ -665,10 +714,10 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
                   Active Event
                 </label>
                 <div className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-sm">
-                  {activeEvents.length > 0 ? (
-                    <span className="text-white">{activeEvents[0].label} — {new Date(activeEvents[0].eventDateTime).toLocaleString()}</span>
+                  {liveEvent ? (
+                    <span className="text-green-400 font-medium">{liveEvent.label} — {liveEvent.attackName}</span>
                   ) : (
-                    <span className="text-gray-500 italic">null</span>
+                    <span className="text-gray-500 italic">none</span>
                   )}
                 </div>
               </div>
@@ -779,6 +828,9 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
                       onChange={(e) => setEventForm((f) => ({ ...f, date: e.target.value }))}
                       className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 [color-scheme:dark]"
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Your timezone: <span className="text-gray-400">{getLocalTzLabel()}</span> — saved as UTC so all viewers see it at the same moment.
+                    </p>
                     {formErrors.date && (
                       <p className="text-xs text-red-400 mt-1">{formErrors.date}</p>
                     )}
@@ -843,7 +895,17 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-white truncate">{evt.label}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-white truncate">{evt.label}</p>
+                            {(() => {
+                              const now = Date.now();
+                              const start = new Date(evt.eventDateTime).getTime();
+                              const expiry = new Date(evt.expiresAt).getTime();
+                              if (start <= now && now < expiry)
+                                return <span className="text-xs font-bold text-green-400 shrink-0">● LIVE</span>;
+                              return <span className="text-xs text-gray-500 shrink-0">UPCOMING</span>;
+                            })()}
+                          </div>
                           <p className="text-xs text-pink-400 font-medium">{evt.amount}</p>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
@@ -864,18 +926,15 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
                         </div>
                       </div>
                       <div className="text-xs text-gray-500 space-y-0.5">
+                        {evt.attackName && new Date(evt.eventDateTime).getTime() <= Date.now() && (
+                          <p className="text-pink-300 font-medium">Attack  : {evt.attackName}</p>
+                        )}
                         {evt.eventDateTime && (
                           <p>Date    : {new Date(evt.eventDateTime).toLocaleString()}</p>
                         )}
                         <p>Expires : {new Date(evt.expiresAt).toLocaleString()}</p>
                         <p>Attacks : {evt.attacks.length} moves</p>
                       </div>
-                      <button
-                        onClick={() => loadEvent(evt)}
-                        className="w-full py-1.5 rounded-md text-xs font-semibold bg-purple-700 hover:bg-purple-600 text-white transition-colors"
-                      >
-                        Load into Editor
-                      </button>
                     </div>
                   ))}
                 </div>

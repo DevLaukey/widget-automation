@@ -15,13 +15,56 @@ export default function BjjEmbedPage() {
         .then((data) => {
           if (data?.config) {
             const parsed: BjjConfig = data.config;
-            setConfig({
+            const base: BjjConfig = {
               ...parsed,
               attacks: parsed.attacks?.length ? parsed.attacks : DEFAULT_BJJ_CONFIG.attacks,
-            });
-          }
-          if (data?.stoppedAttack) {
-            setStoppedAttack(data.stoppedAttack);
+            };
+
+            // Auto-detect which event is currently active (between its start and expiry).
+            // Sort descending by start time so the most recently started event wins
+            // when multiple events overlap.
+            const now = Date.now();
+            const events: {
+              label: string;
+              amount: string;
+              eventDateTime: string;
+              expiresAt: string;
+              attackName: string;
+              attacks: string[];
+            }[] = Array.isArray(data.events) ? data.events : [];
+
+            const active = [...events]
+              .sort((a, b) => new Date(b.eventDateTime).getTime() - new Date(a.eventDateTime).getTime())
+              .find(
+                (e) => new Date(e.eventDateTime).getTime() <= now && now < new Date(e.expiresAt).getTime()
+              );
+
+            if (active) {
+              // Active event overrides everything — loop stops, event details shown.
+              // Clear stoppedAttack so a previous event's manual stop can't bleed in.
+              setStoppedAttack(undefined);
+              setConfig({
+                ...base,
+                amount:           active.amount,
+                eventLabel:       active.label,
+                eventDateTime:    active.eventDateTime,
+                expiresAt:        active.expiresAt,
+                activeAttackName: active.attackName,
+                attacks:          active.attacks?.length ? active.attacks : base.attacks,
+              });
+            } else {
+              // No active event — loop freely, clear any stale event fields.
+              // Only then honour a persisted stoppedAttack (manual loop-stop feature).
+              setConfig({
+                ...base,
+                eventDateTime:    "",
+                expiresAt:        "",
+                activeAttackName: "",
+              });
+              if (data?.stoppedAttack) {
+                setStoppedAttack(data.stoppedAttack);
+              }
+            }
           }
         })
         .catch(() => {});
@@ -41,6 +84,15 @@ export default function BjjEmbedPage() {
     }).catch(() => {});
   }, []);
 
+  const handleResume = useCallback(() => {
+    setStoppedAttack(undefined);
+    fetch("/api/bjj", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stoppedAttack: null }),
+    }).catch(() => {});
+  }, []);
+
   return (
     <div
       style={{
@@ -51,7 +103,7 @@ export default function BjjEmbedPage() {
         justifyContent: "center",
       }}
     >
-      <BjjWidget config={config} initialAttack={stoppedAttack} onStop={handleStop} />
+      <BjjWidget config={config} initialAttack={stoppedAttack} onStop={handleStop} onResume={handleResume} />
     </div>
   );
 }

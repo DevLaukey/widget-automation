@@ -32,6 +32,11 @@ function expiryAt(eventDateTime: string): string {
   const base = eventDateTime ? new Date(eventDateTime) : new Date();
   const d = new Date(base);
   d.setHours(23, 0, 0, 0); // 11 PM local time
+  // If the event starts at or after 11 PM, push expiry to 11 PM the next day
+  // so the event can actually be live before it expires.
+  if (d.getTime() <= base.getTime()) {
+    d.setDate(d.getDate() + 1);
+  }
   return d.toISOString();
 }
 
@@ -502,14 +507,7 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
         const updated = [...savedEvents, evt];
         setSavedEvents(updated);
         await saveToFile(config, updated);
-
-        // Auto-load if the event is already active (start time has passed)
-        if (new Date(evt.eventDateTime).getTime() <= Date.now()) {
-          loadEvent(evt);
-          showToast(`Event "${evt.label}" created & loaded`);
-        } else {
-          showToast(`Event "${evt.label}" created`);
-        }
+        showToast(`Event "${evt.label}" created`);
       }
     } catch {
       showToast("Save failed — please try again");

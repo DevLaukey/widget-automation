@@ -587,6 +587,18 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
     .sort((a, b) => new Date(b.eventDateTime).getTime() - new Date(a.eventDateTime).getTime())
     .find((e) => new Date(e.eventDateTime).getTime() <= now && now < new Date(e.expiresAt).getTime());
 
+  // Preview config: when a live event exists, freeze the preview on the event's attack
+  // (mirrors what the embed page does when it detects an active event)
+  const previewConfig: BjjConfig = liveEvent ? {
+    ...config,
+    amount:           liveEvent.amount,
+    eventLabel:       liveEvent.label,
+    eventDateTime:    liveEvent.eventDateTime,
+    expiresAt:        liveEvent.expiresAt,
+    activeAttackName: liveEvent.attackName,
+    attacks:          liveEvent.attacks?.length ? liveEvent.attacks : (config.attacks ?? DEFAULT_BJJ_ATTACKS),
+  } : config;
+
   const tabLabels: { key: Tab; label: string }[] = [
     { key: "config",  label: "Configure" },
     { key: "attacks", label: `Attacks (${attacks.length})` },
@@ -981,8 +993,12 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
           mobileView === "preview" ? "flex" : "hidden md:flex"
         }`}
       >
-        <div className="shrink-0 px-4 py-2 border-b border-gray-800 text-xs text-gray-500 uppercase tracking-widest">
-          Live Preview — fetching from server
+        <div className="shrink-0 px-4 py-2 border-b border-gray-800 text-xs uppercase tracking-widest">
+          {liveEvent ? (
+            <span className="text-green-400 font-semibold">● Live: {liveEvent.label} — {liveEvent.attackName}</span>
+          ) : (
+            <span className="text-gray-500">Live Preview — no active event</span>
+          )}
         </div>
         <div className="flex-1 flex items-center justify-center p-8">
           <div
@@ -993,7 +1009,7 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
               maxWidth: "700px",
             }}
           >
-            <BjjWidget config={config} />
+            <BjjWidget config={previewConfig} />
           </div>
         </div>
       </div>

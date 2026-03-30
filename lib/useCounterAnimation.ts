@@ -57,6 +57,7 @@ export function useCounterAnimation(
   const elementRef = useRef<HTMLElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
+  const prevEndValueRef = useRef(endValue);
 
   // Format the display value with prefix, suffix, and decimal places
   const formatValue = useCallback(
@@ -125,6 +126,22 @@ export function useCounterAnimation(
     setHasTriggered(false);
     startTimeRef.current = null;
   }, [startValue]);
+
+  // Re-trigger animation when endValue changes (e.g. after API fetch)
+  useEffect(() => {
+    if (prevEndValueRef.current === endValue) return;
+    prevEndValueRef.current = endValue;
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    setRawValue(startValue);
+    setIsAnimating(false);
+    setIsComplete(false);
+    setHasTriggered(false);
+    startTimeRef.current = null;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endValue]);
 
   // Intersection Observer for scroll-triggered animation
   useEffect(() => {

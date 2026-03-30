@@ -1,7 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { CounterCard } from "./CounterCard";
-import type { WidgetConfig } from "@/types";
+import type { WidgetConfig, CardData } from "@/types";
 
 // =============================================================================
 // Props Interface
@@ -18,6 +19,42 @@ export interface CounterWidgetProps {
 
 export function CounterWidget({ config, className = "" }: CounterWidgetProps) {
   const { cards, styles, layout } = config;
+
+  // Auto-fetch live values from the API URL (mirrors what the embed code does)
+  const [apiValues, setApiValues] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!config.apiUrl) {
+      setApiValues({});
+      return;
+    }
+    const controller = new AbortController();
+    fetch(`/api/proxy?url=${encodeURIComponent(config.apiUrl)}`, {
+      signal: controller.signal,
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        const apiCards: Array<{ endValue?: number }> = data?.cards || [];
+        if (!apiCards.length) return;
+        const values: Record<string, number> = {};
+        config.cards.forEach((card, i) => {
+          if (apiCards[i]?.endValue != null) {
+            values[card.id] = apiCards[i].endValue as number;
+          }
+        });
+        setApiValues(values);
+      })
+      .catch(() => {}); // Fall back to config values silently
+    return () => controller.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config.apiUrl]);
+
+  // Overlay API-fetched endValues onto cards when available
+  const resolvedCards: CardData[] = cards.map((card) =>
+    apiValues[card.id] != null
+      ? { ...card, animation: { ...card.animation, endValue: apiValues[card.id] } }
+      : card
+  );
 
   // Generate responsive grid columns CSS
   const gridTemplateColumns = {
@@ -44,7 +81,7 @@ export function CounterWidget({ config, className = "" }: CounterWidgetProps) {
           ...gridTemplateColumns,
         }}
       >
-        {cards.map((card) => (
+        {resolvedCards.map((card) => (
           <CounterCard key={card.id} card={card} styles={styles} />
         ))}
       </div>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
+  BjjWidget,
   DEFAULT_BJJ_CONFIG,
   DEFAULT_BJJ_ATTACKS,
 } from "./BjjWidget";
@@ -119,14 +120,13 @@ function generateEmbedCode(config: BjjConfig, origin: string): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<base href="${origin}/">
 <title>BJJ Submission Bonus Widget</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,900&family=Rajdhani:wght@600&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { background: transparent; }
+body { background: transparent; }
 
 .bjj-widget {
   max-width: 680px; width: 100%; margin: 0 auto;
@@ -184,7 +184,7 @@ html, body { background: transparent; }
   <div class="bjj-logo-spark" id="bjj-logo-wrap">
     <img src="${origin}/logo-widget.svg" alt="Widget Logo" width="660" height="660" style="display:block;">
   </div>
-  <div class="bjj-amount" id="bjj-amount">${config.amount}</div>
+  <div class="bjj-amount">${config.amount}</div>
   <div class="bjj-label" id="bjj-label">${config.eventLabel}</div>
   <div class="bjj-attack" id="bjj-attack"></div>
 </div>
@@ -258,12 +258,21 @@ html, body { background: transparent; }
       } catch (e) {
         try {
           var res2 = await fetch(API_TEXT, { cache: 'no-cache' });
-          if (res2.ok) data = { attacks: [], currentAttack: (await res2.text()).trim() };
+          if (res2.ok) data = { isLooping: true, currentAttack: (await res2.text()).trim() };
         } catch (e2) {}
       }
       if (!data) return;
-      // Only sync the attacks list — never let server state stop the loop
       if (Array.isArray(data.attacks) && data.attacks.length > 0) localAttacks = data.attacks;
+      if (isEnded) { stopLoop(); return; }
+      var shouldLoop = !!data.isLooping;
+      if (shouldLoop !== isLooping) {
+        setMode(shouldLoop);
+        if (shouldLoop) { startLoop(); }
+        else { stopLoop(); showAttack(data.selectedAttackOnStop || data.currentAttack || currentAttack); }
+      } else if (!shouldLoop) {
+        var atk = data.selectedAttackOnStop || data.currentAttack || currentAttack;
+        if (atk && atk !== currentAttack) showAttack(atk);
+      }
     } finally { isSyncing = false; }
   }
 
@@ -300,29 +309,6 @@ html, body { background: transparent; }
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'visible') syncWithServer();
   });
-
-  // Counter animation for amount
-  (function animateAmount() {
-    var el = document.getElementById('bjj-amount');
-    if (!el) return;
-    var finalText = el.textContent || '';
-    var match = finalText.match(/^([^0-9]*)([0-9][0-9,.]*)(.*)$/);
-    if (!match) return;
-    var prefix = match[1], suffix = match[3];
-    var value = parseFloat(match[2].replace(/,/g, ''));
-    if (isNaN(value) || value === 0) return;
-    var duration = 1500, startTime = null;
-    function step(ts) {
-      if (!startTime) startTime = ts;
-      var p = Math.min((ts - startTime) / duration, 1);
-      var ep = 1 - Math.pow(1 - p, 3);
-      var current = Math.round(ep * value);
-      el.textContent = prefix + current.toLocaleString('en-US') + suffix;
-      if (p < 1) requestAnimationFrame(step);
-      else el.textContent = finalText;
-    }
-    requestAnimationFrame(step);
-  })();
 })();
 </script>
 </body>
@@ -612,22 +598,6 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
     activeAttackName: liveEvent.attackName,
     attacks:          liveEvent.attacks?.length ? liveEvent.attacks : (config.attacks ?? DEFAULT_BJJ_ATTACKS),
   } : config;
-
-  // Memoize the preview HTML so the iframe only reloads when config actually changes
-  const previewHtml = useMemo(
-    () => origin ? generateEmbedCode(previewConfig, origin) : "",
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      origin,
-      previewConfig.amount,
-      previewConfig.eventLabel,
-      previewConfig.eventDateTime,
-      previewConfig.expiresAt,
-      previewConfig.activeAttackName,
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      JSON.stringify(previewConfig.attacks),
-    ]
-  );
 
   const tabLabels: { key: Tab; label: string }[] = [
     { key: "config",  label: "Configure" },
@@ -1017,7 +987,7 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
         </div>
       </div>
 
-      {/* ── Live Preview (iframe — identical to exported embed) ── */}
+      {/* ── Live Preview ── */}
       <div
         className={`flex-1 min-w-0 min-h-0 flex-col bg-gray-950 overflow-auto ${
           mobileView === "preview" ? "flex" : "hidden md:flex"
@@ -1037,25 +1007,9 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
               borderRadius: "12px",
               width: "100%",
               maxWidth: "700px",
-              overflow: "hidden",
             }}
           >
-            {previewHtml ? (
-              <iframe
-                srcDoc={previewHtml}
-                title="BJJ Widget Preview"
-                style={{
-                  width: "100%",
-                  height: "700px",
-                  border: "none",
-                  background: "transparent",
-                  display: "block",
-                }}
-                sandbox="allow-scripts"
-              />
-            ) : (
-              <div style={{ height: "700px" }} />
-            )}
+            <BjjWidget config={previewConfig} />
           </div>
         </div>
       </div>

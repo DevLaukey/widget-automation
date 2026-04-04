@@ -184,28 +184,29 @@ body { background: transparent; }
   <div class="bjj-logo-spark" id="bjj-logo-wrap">
     <img src="${origin}/logo-widget.svg" alt="Widget Logo" width="660" height="660" style="display:block;">
   </div>
-  <div class="bjj-amount">${config.amount}</div>
-  <div class="bjj-label" id="bjj-label">${config.eventLabel}</div>
+  <div class="bjj-amount" id="bjj-amount">${config.amount}</div>
+  <div class="bjj-label"  id="bjj-label">${config.eventLabel}</div>
   <div class="bjj-attack" id="bjj-attack"></div>
 </div>
 
 <script>
 (function () {
-  var EVENT_END    = ${config.eventDateTime ? `new Date('${config.eventDateTime}')` : "null"};
-  var EVENT_EXPIRY = ${config.expiresAt ? `new Date('${config.expiresAt}')` : "null"};
-  var EVENT_ATTACK = ${config.activeAttackName ? `'${config.activeAttackName.replace(/'/g, "\\'")}'` : "null"};
+  var API_URL       = '${origin}/api/bjj';
   var LOOP_INTERVAL = 200;
+  var POLL_INTERVAL = 5000;
 
-  var attacks  = ${JSON.stringify(attacks)};
-  var isEnded  = false;
-  var loopTimer = null;
+  var attacks    = ${JSON.stringify(attacks)};
+  var isEventLive = false;
+  var loopTimer   = null;
 
   var root     = document.getElementById('bjj-root');
   var logoWrap = document.getElementById('bjj-logo-wrap');
+  var amountEl = document.getElementById('bjj-amount');
+  var labelEl  = document.getElementById('bjj-label');
   var attackEl = document.getElementById('bjj-attack');
 
   function startLoop() {
-    if (loopTimer || isEnded) return;
+    if (loopTimer || isEventLive) return;
     loopTimer = setInterval(function () {
       if (!attacks.length) return;
       attackEl.textContent = attacks[Math.floor(Math.random() * attacks.length)];
@@ -216,41 +217,66 @@ body { background: transparent; }
     if (loopTimer) { clearInterval(loopTimer); loopTimer = null; }
   }
 
-  function endEvent() {
-    if (isEnded) return;
-    isEnded = true;
+  function showEvent(evt) {
     stopLoop();
-    root.className     = 'bjj-widget mode-event';
-    logoWrap.className = '';
+    isEventLive            = true;
+    root.className         = 'bjj-widget mode-event';
+    logoWrap.className     = '';
+    amountEl.textContent   = evt.amount     != null ? evt.amount     : amountEl.textContent;
+    labelEl.textContent    = evt.label      != null ? evt.label      : labelEl.textContent;
+    attackEl.textContent   = evt.attackName != null ? evt.attackName : attackEl.textContent;
   }
 
-  function scheduleResume(delay) {
-    setTimeout(function () {
-      isEnded = false;
-      root.className     = 'bjj-widget mode-loop';
-      logoWrap.className = 'bjj-logo-spark';
-      startLoop();
-    }, delay);
-  }
-
-  var now            = Date.now();
-  var alreadyExpired = EVENT_EXPIRY && now >= EVENT_EXPIRY.getTime();
-  var alreadyFrozen  = !alreadyExpired && EVENT_END && now >= EVENT_END.getTime();
-
-  if (alreadyFrozen) {
-    endEvent();
-    if (EVENT_ATTACK) attackEl.textContent = EVENT_ATTACK;
-    if (EVENT_EXPIRY) scheduleResume(EVENT_EXPIRY.getTime() - now);
-  } else {
-    startLoop();
-    if (EVENT_END && !alreadyExpired) {
-      setTimeout(function () {
-        endEvent();
-        if (EVENT_ATTACK) attackEl.textContent = EVENT_ATTACK;
-        if (EVENT_EXPIRY) scheduleResume(EVENT_EXPIRY.getTime() - Date.now());
-      }, EVENT_END.getTime() - now);
+  function resumeLoop(cfg) {
+    isEventLive        = false;
+    root.className     = 'bjj-widget mode-loop';
+    logoWrap.className = 'bjj-logo-spark';
+    if (cfg) {
+      if (cfg.amount     != null) amountEl.textContent = cfg.amount;
+      if (cfg.eventLabel != null) labelEl.textContent  = cfg.eventLabel;
+      if (cfg.attacks && cfg.attacks.length) attacks   = cfg.attacks;
     }
+    startLoop();
   }
+
+  function poll() {
+    fetch(API_URL, { cache: 'no-cache' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data) return;
+        var now    = Date.now();
+        var events = Array.isArray(data.events) ? data.events : [];
+
+        // Most recently started event that is currently live
+        var active = events
+          .filter(function (e) {
+            return new Date(e.eventDateTime).getTime() <= now &&
+                   now < new Date(e.expiresAt).getTime();
+          })
+          .sort(function (a, b) {
+            return new Date(b.eventDateTime).getTime() - new Date(a.eventDateTime).getTime();
+          })[0];
+
+        if (active) {
+          // Always call showEvent to keep display in sync (idempotent when already live)
+          showEvent(active);
+        } else {
+          if (isEventLive) resumeLoop(data.config);
+          // Keep attacks fresh while looping
+          if (!isEventLive && data.config && data.config.attacks && data.config.attacks.length) {
+            attacks = data.config.attacks;
+          }
+        }
+      })
+      .catch(function () {});
+  }
+
+  startLoop();
+  poll();
+  setInterval(poll, POLL_INTERVAL);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') poll();
+  });
 })();
 </script>
 </body>

@@ -105,6 +105,18 @@ export const DEFAULT_BJJ_CONFIG: BjjConfig = {
   attacks: [...DEFAULT_BJJ_ATTACKS],
 };
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function parseAmountForCounter(
+  amount: string
+): { prefix: string; value: number; suffix: string } | null {
+  const match = amount.match(/^([^0-9]*)([0-9][0-9,.]*)(.*)$/);
+  if (!match) return null;
+  const value = parseFloat(match[2].replace(/,/g, ""));
+  if (isNaN(value) || value === 0) return null;
+  return { prefix: match[1], value, suffix: match[3] };
+}
+
 // ─── Widget ───────────────────────────────────────────────────────────────────
 
 export function BjjWidget({
@@ -123,6 +135,28 @@ export function BjjWidget({
   const [isLooping, setIsLooping] = useState(true);
   const [isEnded, setIsEnded] = useState(false);
   const [displayAttack, setDisplayAttack] = useState(initialAttack ?? "");
+  const [displayAmount, setDisplayAmount] = useState(amount);
+
+  // Counter animation for amount
+  useEffect(() => {
+    const parsed = parseAmountForCounter(amount);
+    if (!parsed) { setDisplayAmount(amount); return; }
+    const { prefix, value, suffix } = parsed;
+    const duration = 1500;
+    let startTime: number | null = null;
+    let raf: number;
+    function step(ts: number) {
+      if (!startTime) startTime = ts;
+      const p = Math.min((ts - startTime) / duration, 1);
+      const ep = 1 - Math.pow(1 - p, 3); // easeOut cubic
+      const current = Math.round(ep * value);
+      setDisplayAmount(prefix + current.toLocaleString("en-US") + suffix);
+      if (p < 1) { raf = requestAnimationFrame(step); }
+      else { setDisplayAmount(amount); }
+    }
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [amount]);
 
   const attacksRef = useRef<string[]>(
     config.attacks?.length ? [...config.attacks] : [...DEFAULT_BJJ_ATTACKS]
@@ -273,7 +307,7 @@ export function BjjWidget({
           whiteSpace: "nowrap",
         }}
       >
-        {amount}
+        {displayAmount}
       </div>
 
       {/* Event Label */}

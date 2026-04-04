@@ -184,7 +184,7 @@ body { background: transparent; }
   <div class="bjj-logo-spark" id="bjj-logo-wrap">
     <img src="${origin}/logo-widget.svg" alt="Widget Logo" width="660" height="660" style="display:block;">
   </div>
-  <div class="bjj-amount">${config.amount}</div>
+  <div class="bjj-amount" id="bjj-amount">${config.amount}</div>
   <div class="bjj-label" id="bjj-label">${config.eventLabel}</div>
   <div class="bjj-attack" id="bjj-attack"></div>
 </div>
@@ -258,21 +258,12 @@ body { background: transparent; }
       } catch (e) {
         try {
           var res2 = await fetch(API_TEXT, { cache: 'no-cache' });
-          if (res2.ok) data = { isLooping: true, currentAttack: (await res2.text()).trim() };
+          if (res2.ok) data = { attacks: [], currentAttack: (await res2.text()).trim() };
         } catch (e2) {}
       }
       if (!data) return;
+      // Only sync the attacks list — never let server state stop the loop
       if (Array.isArray(data.attacks) && data.attacks.length > 0) localAttacks = data.attacks;
-      if (isEnded) { stopLoop(); return; }
-      var shouldLoop = !!data.isLooping;
-      if (shouldLoop !== isLooping) {
-        setMode(shouldLoop);
-        if (shouldLoop) { startLoop(); }
-        else { stopLoop(); showAttack(data.selectedAttackOnStop || data.currentAttack || currentAttack); }
-      } else if (!shouldLoop) {
-        var atk = data.selectedAttackOnStop || data.currentAttack || currentAttack;
-        if (atk && atk !== currentAttack) showAttack(atk);
-      }
     } finally { isSyncing = false; }
   }
 
@@ -309,6 +300,29 @@ body { background: transparent; }
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'visible') syncWithServer();
   });
+
+  // Counter animation for amount
+  (function animateAmount() {
+    var el = document.getElementById('bjj-amount');
+    if (!el) return;
+    var finalText = el.textContent || '';
+    var match = finalText.match(/^([^0-9]*)([0-9][0-9,.]*)(.*)$/);
+    if (!match) return;
+    var prefix = match[1], suffix = match[3];
+    var value = parseFloat(match[2].replace(/,/g, ''));
+    if (isNaN(value) || value === 0) return;
+    var duration = 1500, startTime = null;
+    function step(ts) {
+      if (!startTime) startTime = ts;
+      var p = Math.min((ts - startTime) / duration, 1);
+      var ep = 1 - Math.pow(1 - p, 3);
+      var current = Math.round(ep * value);
+      el.textContent = prefix + current.toLocaleString('en-US') + suffix;
+      if (p < 1) requestAnimationFrame(step);
+      else el.textContent = finalText;
+    }
+    requestAnimationFrame(step);
+  })();
 })();
 </script>
 </body>

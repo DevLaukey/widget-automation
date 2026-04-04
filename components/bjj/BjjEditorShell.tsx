@@ -191,50 +191,24 @@ body { background: transparent; }
 
 <script>
 (function () {
-  var API_STATUS    = 'https://ugia-mmeab.ondigitalocean.app/api/aras25/status';
-  var API_TEXT      = 'https://ugia-mmeab.ondigitalocean.app/api/aras25/attack/text';
-  var EVENT_END     = ${config.eventDateTime ? `new Date('${config.eventDateTime}')` : "null"};
-  var EVENT_EXPIRY  = ${config.expiresAt ? `new Date('${config.expiresAt}')` : "null"};
-  var EVENT_ATTACK  = ${config.activeAttackName ? `'${config.activeAttackName.replace(/'/g, "\\'")}'` : "null"};
-  var SYNC_INTERVAL = 3000;
+  var EVENT_END    = ${config.eventDateTime ? `new Date('${config.eventDateTime}')` : "null"};
+  var EVENT_EXPIRY = ${config.expiresAt ? `new Date('${config.expiresAt}')` : "null"};
+  var EVENT_ATTACK = ${config.activeAttackName ? `'${config.activeAttackName.replace(/'/g, "\\'")}'` : "null"};
   var LOOP_INTERVAL = 200;
 
-  var defaultAttacks = ${JSON.stringify(attacks)};
-
-  var localAttacks  = defaultAttacks.slice();
-  var isLooping     = true;
-  var isEnded       = false;
-  var currentAttack = '';
-  var loopTimer     = null;
-  var isSyncing     = false;
+  var attacks  = ${JSON.stringify(attacks)};
+  var isEnded  = false;
+  var loopTimer = null;
 
   var root     = document.getElementById('bjj-root');
   var logoWrap = document.getElementById('bjj-logo-wrap');
   var attackEl = document.getElementById('bjj-attack');
 
-  function endEvent() {
-    if (isEnded) return;
-    isEnded   = true;
-    isLooping = false;
-    stopLoop();
-    root.className     = 'bjj-widget mode-event';
-    logoWrap.className = '';
-  }
-
-  function setMode(loop) {
-    if (isEnded) return;
-    isLooping          = loop;
-    root.className     = 'bjj-widget ' + (loop ? 'mode-loop' : 'mode-event');
-    logoWrap.className = loop ? 'bjj-logo-spark' : 'bjj-logo-rgb';
-  }
-
   function startLoop() {
     if (loopTimer || isEnded) return;
     loopTimer = setInterval(function () {
-      if (!localAttacks.length) return;
-      var atk = localAttacks[Math.floor(Math.random() * localAttacks.length)];
-      currentAttack = atk;
-      attackEl.textContent = atk;
+      if (!attacks.length) return;
+      attackEl.textContent = attacks[Math.floor(Math.random() * attacks.length)];
     }, LOOP_INTERVAL);
   }
 
@@ -242,45 +216,19 @@ body { background: transparent; }
     if (loopTimer) { clearInterval(loopTimer); loopTimer = null; }
   }
 
-  function showAttack(atk) {
-    currentAttack = atk || '';
-    attackEl.textContent = currentAttack;
-  }
-
-  async function syncWithServer() {
-    if (isSyncing) return;
-    isSyncing = true;
-    try {
-      var data = null;
-      try {
-        var res = await fetch(API_STATUS, { cache: 'no-cache' });
-        if (res.ok) data = await res.json();
-      } catch (e) {
-        try {
-          var res2 = await fetch(API_TEXT, { cache: 'no-cache' });
-          if (res2.ok) data = { isLooping: true, currentAttack: (await res2.text()).trim() };
-        } catch (e2) {}
-      }
-      if (!data) return;
-      if (Array.isArray(data.attacks) && data.attacks.length > 0) localAttacks = data.attacks;
-      if (isEnded) { stopLoop(); return; }
-      var shouldLoop = !!data.isLooping;
-      if (shouldLoop !== isLooping) {
-        setMode(shouldLoop);
-        if (shouldLoop) { startLoop(); }
-        else { stopLoop(); showAttack(data.selectedAttackOnStop || data.currentAttack || currentAttack); }
-      } else if (!shouldLoop) {
-        var atk = data.selectedAttackOnStop || data.currentAttack || currentAttack;
-        if (atk && atk !== currentAttack) showAttack(atk);
-      }
-    } finally { isSyncing = false; }
+  function endEvent() {
+    if (isEnded) return;
+    isEnded = true;
+    stopLoop();
+    root.className     = 'bjj-widget mode-event';
+    logoWrap.className = '';
   }
 
   function scheduleResume(delay) {
     setTimeout(function () {
-      isEnded   = false;
-      isLooping = true;
-      setMode(true);
+      isEnded = false;
+      root.className     = 'bjj-widget mode-loop';
+      logoWrap.className = 'bjj-logo-spark';
       startLoop();
     }, delay);
   }
@@ -291,24 +239,18 @@ body { background: transparent; }
 
   if (alreadyFrozen) {
     endEvent();
-    if (EVENT_ATTACK) showAttack(EVENT_ATTACK);
+    if (EVENT_ATTACK) attackEl.textContent = EVENT_ATTACK;
     if (EVENT_EXPIRY) scheduleResume(EVENT_EXPIRY.getTime() - now);
   } else {
     startLoop();
     if (EVENT_END && !alreadyExpired) {
       setTimeout(function () {
         endEvent();
-        if (EVENT_ATTACK) showAttack(EVENT_ATTACK);
+        if (EVENT_ATTACK) attackEl.textContent = EVENT_ATTACK;
         if (EVENT_EXPIRY) scheduleResume(EVENT_EXPIRY.getTime() - Date.now());
       }, EVENT_END.getTime() - now);
     }
   }
-
-  syncWithServer();
-  setInterval(syncWithServer, SYNC_INTERVAL);
-  document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'visible') syncWithServer();
-  });
 })();
 </script>
 </body>

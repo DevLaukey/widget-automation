@@ -3,14 +3,25 @@ import { dbGet, dbSet, dbSetWithTimestamp, dbUpdatedAt } from "@/lib/db";
 
 const KEY = "bjj";
 
+const CORS = {
+  "Access-Control-Allow-Origin":  "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+// Preflight for cross-origin embeds (e.g. Squarespace)
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS });
+}
+
 export async function GET() {
   try {
     const data = await dbGet(KEY);
-    if (!data) return NextResponse.json(null);
+    if (!data) return NextResponse.json(null, { headers: CORS });
     const savedAt = await dbUpdatedAt(KEY);
-    return NextResponse.json({ ...data as object, _savedAt: savedAt });
+    return NextResponse.json({ ...data as object, _savedAt: savedAt }, { headers: CORS });
   } catch {
-    return NextResponse.json(null);
+    return NextResponse.json(null, { headers: CORS });
   }
 }
 

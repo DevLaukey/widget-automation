@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
-  BjjWidget,
   DEFAULT_BJJ_CONFIG,
   DEFAULT_BJJ_ATTACKS,
 } from "./BjjWidget";
@@ -120,13 +119,14 @@ function generateEmbedCode(config: BjjConfig, origin: string): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<base href="${origin}/">
 <title>BJJ Submission Bonus Widget</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,900&family=Rajdhani:wght@600&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: transparent; }
+html, body { background: transparent; }
 
 .bjj-widget {
   max-width: 680px; width: 100%; margin: 0 auto;
@@ -613,6 +613,22 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
     attacks:          liveEvent.attacks?.length ? liveEvent.attacks : (config.attacks ?? DEFAULT_BJJ_ATTACKS),
   } : config;
 
+  // Memoize the preview HTML so the iframe only reloads when config actually changes
+  const previewHtml = useMemo(
+    () => origin ? generateEmbedCode(previewConfig, origin) : "",
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      origin,
+      previewConfig.amount,
+      previewConfig.eventLabel,
+      previewConfig.eventDateTime,
+      previewConfig.expiresAt,
+      previewConfig.activeAttackName,
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      JSON.stringify(previewConfig.attacks),
+    ]
+  );
+
   const tabLabels: { key: Tab; label: string }[] = [
     { key: "config",  label: "Configure" },
     { key: "attacks", label: `Attacks (${attacks.length})` },
@@ -1001,7 +1017,7 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
         </div>
       </div>
 
-      {/* ── Live Preview ── */}
+      {/* ── Live Preview (iframe — identical to exported embed) ── */}
       <div
         className={`flex-1 min-w-0 min-h-0 flex-col bg-gray-950 overflow-auto ${
           mobileView === "preview" ? "flex" : "hidden md:flex"
@@ -1021,9 +1037,25 @@ export function BjjEditorShell({ onBack }: { onBack?: () => void }) {
               borderRadius: "12px",
               width: "100%",
               maxWidth: "700px",
+              overflow: "hidden",
             }}
           >
-            <BjjWidget config={previewConfig} />
+            {previewHtml ? (
+              <iframe
+                srcDoc={previewHtml}
+                title="BJJ Widget Preview"
+                style={{
+                  width: "100%",
+                  height: "700px",
+                  border: "none",
+                  background: "transparent",
+                  display: "block",
+                }}
+                sandbox="allow-scripts"
+              />
+            ) : (
+              <div style={{ height: "700px" }} />
+            )}
           </div>
         </div>
       </div>

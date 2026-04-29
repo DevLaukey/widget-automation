@@ -233,17 +233,17 @@
           .sort((a, b) => new Date(b.eventDateTime).getTime() - new Date(a.eventDateTime).getTime())
           .find(e => new Date(e.eventDateTime).getTime() <= now && now < new Date(e.expiresAt).getTime());
 
+        // Amount and label always reflect config
+        amountEl.textContent = config.amount     || '';
+        labelEl.textContent  = config.eventLabel || 'SUBMISSION BONUS — FIGHT NIGHT';
+
         if (active) {
-          // Active event — freeze on its attack, show the bonus amount
+          // Active event — freeze attack display on the event's attack name
           stopLoop();
           setLoopingState(false);
-          amountEl.textContent = active.amount    || '';
-          labelEl.textContent  = active.label     || config.eventLabel || 'SUBMISSION BONUS — FIGHT NIGHT';
           attackEl.textContent = active.attackName || '';
         } else {
-          // No active event — loop freely, hide the bonus amount
-          amountEl.textContent = '';
-          labelEl.textContent  = config.eventLabel || 'SUBMISSION BONUS — FIGHT NIGHT';
+          // No active event — loop attack names freely
           setLoopingState(true);
           startLoop();
         }
